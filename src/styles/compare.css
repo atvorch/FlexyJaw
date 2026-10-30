@@ -1,0 +1,200 @@
+/* drawer */
+.compare-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(340px, 100%);
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  box-shadow: -6px 0 18px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  overflow-y: auto;
+  z-index: 5;
+  transform: translateX(105%);
+  visibility: hidden;
+  transition: transform 0.22s ease, visibility 0s 0.22s;
+}
+.compare-drawer.open {
+  transform: none;
+  visibility: visible;
+  transition: transform 0.22s ease;
+}
+.compare-drawer header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.compare-drawer h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.compare-drawer .sub {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: capitalize;
+}
+.compare-drawer p.muted {
+  margin-top: 10px;
+}
+
+/* before / after picture */
+.compare-picture {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 4px auto 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.compare-picture.big {
+  width: min(76vmin, 620px);
+  height: min(76vmin, 620px);
+}
+.compare-picture canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.compare-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--accent);
+  pointer-events: none;
+}
+.compare-divider::after {
+  content: '‹›';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 21px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+/* --k (0..1) blends a tag from plain to highlighted, set continuously from the divider position */
+.compare-tag {
+  --k: 0;
+  position: absolute;
+  top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 4px;
+  padding: 1px 5px;
+  pointer-events: none;
+  color: color-mix(in srgb, #ffffff calc(var(--k) * 100%), #6b7286);
+  background: color-mix(in srgb, var(--accent) calc(var(--k) * 100%), rgba(255, 255, 255, 0.85));
+  transition: opacity 0.15s linear;
+}
+.compare-tag.left {
+  left: 6px;
+}
+.compare-tag.right {
+  right: 6px;
+}
+.compare-expand {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+}
+.compare-expand svg {
+  width: 14px;
+  height: 14px;
+}
+.compare-help {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  margin: -4px 0 8px;
+}
+
+/* change breakdown */
+.change-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+.change-table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 10px 0 4px;
+}
+.change-table td {
+  padding: 5px 0;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+.change-table td.value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-left: 10px;
+  font-weight: 600;
+}
+.change-table .desc {
+  color: var(--muted);
+  font-size: 12px;
+  display: block;
+}
+.change-table tr.none td {
+  color: var(--muted);
+}
+
+/* larger view */
+.compare-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 24, 33, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 16px;
+}
+.compare-modal-card {
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  max-width: 100%;
+}
+.compare-modal-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.compare-modal-card h3 {
+  margin: 0;
+  font-size: 16px;
+  text-transform: capitalize;
+}
