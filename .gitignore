@@ -1,0 +1,4 @@
+# exported adjustments are personal snapshots, not sources
+tooth-adjustments*.json
+.DS_Store
+Thumbs.db
