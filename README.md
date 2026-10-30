@@ -41,7 +41,7 @@ src/
     AdjustedJaw / OriginalJaw / GumDeformer / ToothGizmo / CameraRig / StagePlayer / JawLabels / Lighting
     materials.ts, registry.ts, colorSetup.ts
   components/  DOM UI
-    viewport/      Viewport (canvas + overlays), HistoryBar, FrontViewButton, ShortcutHint, ToothTooltip
+    viewport/      Viewport (canvas + overlays), ViewToolbar, HistoryBar, ShortcutHint, ToothTooltip
     sidebar/       Sidebar, StageControls, DisplayToggles, ToothChart, ToothEditor, SliderRow, AdjustmentsPanel
     compare/       ChangesBar, CompareDrawer, CompareViewer (before/after divider), CompareModal, ChangeTable
   hooks/       useKeyboardShortcuts
@@ -59,4 +59,5 @@ Per-frame work (stage playback, tooth transforms, gum deformation) reads the sto
 - Changed-teeth bar: open a tooth's comparison with a before/after divider, free rotation, zoom and a larger view, plus the change described in plain terms.
 - Summary for orthodontist: every changed tooth in clinical terms (crown torque, tip, mesial-in/out rotation, translation, intrusion/extrusion) with a plain-words note, copyable as text, downloadable or printable.
 - History timeline at the bottom: every settled change is a step; scrub, undo (Ctrl+Z) and redo (Ctrl+Y / Ctrl+Shift+Z). The timeline lasts for the session; the current adjustments are what gets saved.
+- Camera toolbar at the top: Top (upper arch biting surface), Right, Front, Left, Bottom (lower arch biting surface). Top / Bottom hide the opposite arch; the lit button turns off when you orbit.
 - Front view (F), gizmo mode rotate (R) / move (G), Esc closes the innermost panel.

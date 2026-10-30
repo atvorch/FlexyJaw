@@ -36,7 +36,7 @@ export function useKeyboardShortcuts() {
         case 'g':
           return s.setGizmoMode('translate');
         case 'f':
-          return s.requestFrontView();
+          return s.requestView('front');
         case 'a':
           return s.setApplyAdjustments(!s.applyAdjustments);
         case 'h':

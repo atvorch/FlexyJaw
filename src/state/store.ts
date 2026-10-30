@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { JawModel } from '../data/model';
 import { isUpper } from '../data/fdi';
 import { isEdited, type Adjustments, type ToothAdjustment } from '../domain/adjustments';
+import { isArchView, type JawView } from '../domain/layout';
 import { HISTORY_LIMIT, HISTORY_SETTLE_MS, describeStep, type HistoryEntry } from './history';
 import { loadAdjustments, saveAdjustments } from './persistence';
 
@@ -26,8 +27,13 @@ export interface JawState {
   highlightAdjusted: boolean;
   showOriginal: boolean;
   originalGapMm: number;
-  /** Bumped to ask the camera to glide back to the front view. */
-  frontViewRequest: number;
+  /** Preset the camera should glide to; `viewRequest` is bumped on every request, even for the same view. */
+  cameraView: JawView;
+  viewRequest: number;
+  /** Lit toolbar button; null once the user orbits away from the preset. */
+  activeView: JawView | null;
+  /** An arch is hidden because a Top / Bottom view hid it (not by the user), so other views bring it back. */
+  archHiddenByView: boolean;
 
   // editing
   adjustments: Adjustments;
@@ -55,7 +61,9 @@ export interface JawState {
   setHighlightAdjusted(on: boolean): void;
   setShowOriginal(on: boolean): void;
   setOriginalGap(mm: number): void;
-  requestFrontView(): void;
+  requestView(view: JawView): void;
+  /** The user orbited or zoomed, so no preset is active any more. */
+  leaveView(): void;
   setAdjustment(fdi: number, adjustment: ToothAdjustment): void;
   resetTooth(fdi: number): void;
   resetAll(): void;
@@ -101,7 +109,10 @@ export const useJawStore = create<JawState>()((set, get) => ({
   highlightAdjusted: false,
   showOriginal: false,
   originalGapMm: 8,
-  frontViewRequest: 0,
+  cameraView: 'front',
+  viewRequest: 0,
+  activeView: 'front',
+  archHiddenByView: false,
   adjustments: initialAdjustments,
   selected: null,
   hovered: null,
@@ -123,13 +134,32 @@ export const useJawStore = create<JawState>()((set, get) => ({
     set((s) => {
       const visibility = { ...s.visibility, ...patch };
       const selected = s.selected != null && !toothVisible(s.selected, visibility) ? null : s.selected;
-      return { visibility, selected };
+      // the user took over arch visibility, so later views must not undo their choice
+      const archHiddenByView = 'upper' in patch || 'lower' in patch ? false : s.archHiddenByView;
+      return { visibility, selected, archHiddenByView };
     }),
   setApplyAdjustments: (applyAdjustments) => set({ applyAdjustments }),
   setHighlightAdjusted: (highlightAdjusted) => set({ highlightAdjusted }),
-  setShowOriginal: (showOriginal) => set((s) => ({ showOriginal, frontViewRequest: s.frontViewRequest + 1 })),
+  setShowOriginal: (showOriginal) => {
+    set({ showOriginal });
+    get().requestView(get().activeView ?? 'front');
+  },
   setOriginalGap: (originalGapMm) => set({ originalGapMm }),
-  requestFrontView: () => set((s) => ({ frontViewRequest: s.frontViewRequest + 1 })),
+  requestView: (view) =>
+    set((s) => {
+      let { visibility, archHiddenByView } = s;
+      if (isArchView(view)) {
+        // looking straight onto one arch's biting surface: the other arch would block it
+        visibility = { ...visibility, upper: view === 'upper', lower: view === 'lower' };
+        archHiddenByView = true;
+      } else if (archHiddenByView) {
+        visibility = { ...visibility, upper: true, lower: true };
+        archHiddenByView = false;
+      }
+      const selected = s.selected != null && !toothVisible(s.selected, visibility) ? null : s.selected;
+      return { cameraView: view, activeView: view, viewRequest: s.viewRequest + 1, visibility, archHiddenByView, selected };
+    }),
+  leaveView: () => set((s) => (s.activeView == null ? {} : { activeView: null })),
 
   setAdjustment: (fdi, adjustment) =>
     set((s) => {

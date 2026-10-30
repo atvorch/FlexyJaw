@@ -5,7 +5,7 @@ import { scene } from '../../scene/registry';
 import { useJawStore } from '../../state/store';
 import { ChangesBar } from '../compare/ChangesBar';
 import { CompareDrawer } from '../compare/CompareDrawer';
-import { FrontViewButton } from './FrontViewButton';
+import { ViewToolbar } from './ViewToolbar';
 import { HistoryBar } from './HistoryBar';
 import { ShortcutHint } from './ShortcutHint';
 import { ToothTooltip } from './ToothTooltip';
@@ -48,7 +48,7 @@ export function Viewport({ error }: { error: string | null }) {
       ) : (
         <div className="viewport-loading">{error ? `Failed to load: ${error}` : 'Loading model…'}</div>
       )}
-      <FrontViewButton />
+      <ViewToolbar />
       <ShortcutHint />
       <ToothTooltip container={container} />
       {model && (

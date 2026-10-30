@@ -3,7 +3,7 @@ import { Vector3 } from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import type { JawModel } from '../data/model';
-import { frontView } from '../domain/layout';
+import { cameraPose } from '../domain/layout';
 import { useJawStore } from '../state/store';
 
 const TWEEN_MS = 450;
@@ -16,11 +16,16 @@ interface Tween {
   toPosition: Vector3;
 }
 
-/** Frames the jaw on load and glides back to the front view whenever one is requested. */
+const poseFromStore = (model: JawModel) => {
+  const s = useJawStore.getState();
+  return cameraPose(s.cameraView, model.bounds, s.showOriginal, s.originalGapMm);
+};
+
+/** Frames the jaw on load and glides to a preset view (front, sides, top, bottom) whenever one is requested. */
 export function CameraRig({ model }: { model: JawModel }) {
   const camera = useThree((s) => s.camera);
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
-  const request = useJawStore((s) => s.frontViewRequest);
+  const request = useJawStore((s) => s.viewRequest);
   const tween = useRef<Tween | null>(null);
   const framed = useRef(false);
 
@@ -28,19 +33,21 @@ export function CameraRig({ model }: { model: JawModel }) {
   useEffect(() => {
     if (!controls || framed.current) return;
     framed.current = true;
-    const s = useJawStore.getState();
-    const pose = frontView(model.bounds, s.showOriginal, s.originalGapMm);
+    const pose = poseFromStore(model);
     controls.target.copy(pose.target);
     camera.position.copy(pose.position);
     controls.update();
   }, [controls, camera, model]);
 
-  // any user orbit cancels a running glide
+  // any user orbit / zoom cancels a running glide and un-lights the preset button
   useEffect(() => {
     if (!controls) return;
-    const cancel = () => (tween.current = null);
-    controls.addEventListener('start', cancel);
-    return () => controls.removeEventListener('start', cancel);
+    const onStart = () => {
+      tween.current = null;
+      useJawStore.getState().leaveView();
+    };
+    controls.addEventListener('start', onStart);
+    return () => controls.removeEventListener('start', onStart);
   }, [controls]);
 
   useEffect(() => {
@@ -49,8 +56,7 @@ export function CameraRig({ model }: { model: JawModel }) {
     controls.enableDamping = false;
     controls.update();
     controls.enableDamping = true;
-    const s = useJawStore.getState();
-    const pose = frontView(model.bounds, s.showOriginal, s.originalGapMm);
+    const pose = poseFromStore(model);
     tween.current = {
       start: performance.now(),
       fromTarget: controls.target.clone(),
@@ -66,7 +72,12 @@ export function CameraRig({ model }: { model: JawModel }) {
     const k = Math.min(1, (performance.now() - t.start) / TWEEN_MS);
     const e = 1 - Math.pow(1 - k, 3);
     controls.target.lerpVectors(t.fromTarget, t.toTarget, e);
-    camera.position.lerpVectors(t.fromPosition, t.toPosition, e);
+    // glide around the target rather than straight through it, so front ↔ top doesn't dive into the jaw
+    const from = t.fromPosition.clone().sub(t.fromTarget), to = t.toPosition.clone().sub(t.toTarget);
+    const radius = from.length() + (to.length() - from.length()) * e;
+    const dir = from.normalize().lerp(to.normalize(), e);
+    if (dir.lengthSq() < 1e-8) dir.copy(to); // exactly opposite views: just jump direction
+    camera.position.copy(controls.target).addScaledVector(dir.normalize(), radius);
     if (k === 1) tween.current = null;
   });
 
