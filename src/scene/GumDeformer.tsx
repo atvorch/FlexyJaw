@@ -20,6 +20,9 @@ export function GumDeformer({ gums }: { gums: GumModel[] }) {
       interpolateStagePositions(g.stagePositions, stage, attr.array as Float32Array);
       attr.needsUpdate = true;
       g.geometry.computeVertexNormals();
+      // gums take clicks, so picking needs bounds that match the current shape
+      g.geometry.computeBoundingSphere();
+      g.geometry.computeBoundingBox();
     }
   });
   return null;

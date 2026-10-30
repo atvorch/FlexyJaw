@@ -1,4 +1,4 @@
-import type { Object3D } from 'three';
+import { Mesh, type Intersection, type Object3D, type Raycaster } from 'three';
 
 /**
  * Imperative handles shared between scene components that are not parent/child:
@@ -11,5 +11,14 @@ export const scene = {
   gizmo: null as { axis: string | null } | null,
 };
 
-/** For meshes that should never take pointer events (gums, the original jaw). */
+/** For meshes that should never take pointer events (the original jaw). */
 export const noRaycast = () => {};
+
+/**
+ * three.js picks hidden objects too (it only checks layers), so a hidden arch would still catch clicks.
+ * Use as a mesh's `raycast` to make it pickable only while it and all its parents are visible.
+ */
+export function raycastWhenVisible(this: Mesh, raycaster: Raycaster, intersects: Intersection[]) {
+  for (let o: Object3D | null = this; o; o = o.parent) if (!o.visible) return;
+  Mesh.prototype.raycast.call(this, raycaster, intersects);
+}

@@ -6,7 +6,7 @@ import { applyToPivot, isEdited } from '../domain/adjustments';
 import { adjustmentWeight, interpolateStageMatrix } from '../domain/stage';
 import { useJawStore } from '../state/store';
 import { COLORS, createToothMaterial } from './materials';
-import { scene } from './registry';
+import { raycastWhenVisible, scene } from './registry';
 
 /** A movement past this many pixels between press and release is an orbit drag, not a click. */
 const CLICK_SLOP_PX = 4;
@@ -68,6 +68,7 @@ export function Tooth({ tooth }: { tooth: ToothModel }) {
           geometry={tooth.geometry}
           material={material}
           position={meshOffset}
+          raycast={raycastWhenVisible}
           onClick={onClick}
           onPointerOver={onPointerOver}
           onPointerOut={onPointerOut}
