@@ -1,4 +1,6 @@
+/* always light, whatever the browser's or system's dark-mode setting */
 :root {
+  color-scheme: light;
   --bg: #eef0f4;
   --panel: #ffffff;
   --text: #1d2230;
@@ -9,31 +11,6 @@
   --edited: #e08a1e;
   --accent-soft: #e4ecfc;
   --scene-bg: #f7f7f9;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #14171f;
-    --panel: #1c2029;
-    --text: #e6e9f0;
-    --muted: #949bb0;
-    --line: #2c3240;
-    --accent: #6b9bff;
-    --chip: #252a35;
-    --edited: #f0a040;
-    --accent-soft: #23304d;
-  }
-}
-:root[data-theme='dark'] {
-  --bg: #14171f;
-  --panel: #1c2029;
-  --text: #e6e9f0;
-  --muted: #949bb0;
-  --line: #2c3240;
-  --accent: #6b9bff;
-  --chip: #252a35;
-  --edited: #f0a040;
-  --accent-soft: #23304d;
 }
 
 * {
