@@ -1,3 +1,4 @@
+import publishedPlan from '../data/publishedPlan.json';
 import { isEdited, type Adjustments, type ToothAdjustment, type Vec3 } from '../domain/adjustments';
 
 /** Named saves, newest last. */
@@ -6,6 +7,8 @@ const SAVES_KEY = 'jaw-editor-saves-v1';
 const DRAFT_KEY = 'jaw-editor-draft-v1';
 /** The old always-on autosave. Read once to seed the first save; never written or deleted. */
 const LEGACY_AUTOSAVE_KEY = 'jaw-editor-adjustments-v1';
+/** Marks that the version published with the site has been added to this browser's saves. */
+const PUBLISHED_SEEN_KEY = 'jaw-editor-published-seen-v1';
 const DEG = 180 / Math.PI;
 
 interface StoredAdjustment {
@@ -75,9 +78,11 @@ export function loadVersions(): SavedVersion[] {
   try {
     const stored = readStoredVersions();
     if (stored) {
-      return stored
-        .filter((v) => v && typeof v.id === 'string' && typeof v.name === 'string')
-        .map((v) => ({ id: v.id, name: v.name, savedAt: Number(v.savedAt) || 0, adjustments: deserialize(v.teeth) }));
+      return withPublishedPlan(
+        stored
+          .filter((v) => v && typeof v.id === 'string' && typeof v.name === 'string')
+          .map((v) => ({ id: v.id, name: v.name, savedAt: Number(v.savedAt) || 0, adjustments: deserialize(v.teeth) })),
+      );
     }
     const legacy = localStorage.getItem(LEGACY_AUTOSAVE_KEY);
     const adjustments = legacy ? deserialize(JSON.parse(legacy)) : {};
@@ -85,10 +90,32 @@ export function loadVersions(): SavedVersion[] {
       ? [{ id: newId(), name: 'Changes before named saves', savedAt: Date.now(), adjustments }]
       : [];
     writeVersions(seeded);
-    return seeded;
+    return withPublishedPlan(seeded);
   } catch {
     return [];
   }
+}
+
+/**
+ * Saves live in each browser, so the changes published with the site (src/data/publishedPlan.json) are added
+ * once as a saved version in every browser that opens it. Skipped where an identical version already exists,
+ * and never re-added after the user deletes it.
+ */
+function withPublishedPlan(versions: SavedVersion[]): SavedVersion[] {
+  const seenKey = `${PUBLISHED_SEEN_KEY}:${publishedPlan.id}`;
+  if (localStorage.getItem(seenKey)) return versions;
+  localStorage.setItem(seenKey, '1');
+  const teeth = JSON.stringify(serialize(deserialize(publishedPlan.teeth)));
+  if (versions.some((v) => v.id === publishedPlan.id || JSON.stringify(serialize(v.adjustments)) === teeth)) return versions;
+  const published: SavedVersion = {
+    id: publishedPlan.id,
+    name: publishedPlan.name,
+    savedAt: publishedPlan.savedAt,
+    adjustments: deserialize(publishedPlan.teeth),
+  };
+  const next = [...versions, published].sort((a, b) => a.savedAt - b.savedAt);
+  writeVersions(next);
+  return next;
 }
 
 /** @returns false when storage is unavailable (private mode, blocked site data, quota). */
