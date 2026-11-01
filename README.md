@@ -65,4 +65,5 @@ Per-frame work (stage playback, tooth transforms, gum deformation) reads the sto
 - The address bar always mirrors the display toggles (`gums`, `upper`, `lower`, `highlight`, `original`; 1 / 0), updated in place without adding Back-button entries, so a reload or bookmark reopens the same view.
 - Share (top right) copies a view-only link: `?mode=view&gums=1&upper=1&lower=1&highlight=0&original=0&adj=…`. The toggles reproduce the sharer's view and `adj` carries the tooth adjustments (saved versions only exist in the sharer's browser). In view-only mode editing, saving, versions, history and import/reset are hidden. The link only works for others once the app is deployed somewhere they can reach.
 - Camera toolbar at the top: Top (upper arch biting surface), Right, Front, Left, Bottom (lower arch biting surface). Top / Bottom hide the opposite arch; the lit button turns off when you orbit.
+- Mouse: drag to orbit, drag with the wheel (or right button) pressed to pan, scroll to zoom.
 - Front view (F), gizmo mode rotate (R) / move (G), Esc closes the innermost panel.
