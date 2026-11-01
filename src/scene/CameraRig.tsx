@@ -3,13 +3,16 @@ import { Vector3 } from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import type { JawModel } from '../data/model';
-import { cameraPose } from '../domain/layout';
+import { cameraPose, toothFocusPose } from '../domain/layout';
 import { useJawStore } from '../state/store';
 
 const TWEEN_MS = 450;
+/** Following a selected tooth is a slower, gentler move than clicking a view button. */
+const FOLLOW_TWEEN_MS = 1200;
 
 interface Tween {
   start: number;
+  durationMs: number;
   fromTarget: Vector3;
   fromPosition: Vector3;
   toTarget: Vector3;
@@ -18,16 +21,34 @@ interface Tween {
 
 const poseFromStore = (model: JawModel) => {
   const s = useJawStore.getState();
+  const focused = s.cameraFocus != null ? model.teeth.find((t) => t.fdi === s.cameraFocus) : undefined;
+  if (focused) return toothFocusPose(model, focused, s.showOriginal, s.originalGapMm);
   return cameraPose(s.cameraView, model.bounds, s.showOriginal, s.originalGapMm);
 };
 
-/** Frames the jaw on load and glides to a preset view (front, sides, top, bottom) whenever one is requested. */
+/**
+ * Frames the jaw on load, glides to a preset view or to face one tooth whenever one is requested, and slowly
+ * swings round to face every newly selected tooth.
+ */
 export function CameraRig({ model }: { model: JawModel }) {
   const camera = useThree((s) => s.camera);
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const request = useJawStore((s) => s.viewRequest);
   const tween = useRef<Tween | null>(null);
   const framed = useRef(false);
+  const slowNext = useRef(false);
+
+  // a tooth coming into focus (selected, or opened for comparison): swing round to face it, slowly
+  useEffect(
+    () =>
+      useJawStore.subscribe((s, prev) => {
+        const focus = s.selected ?? s.compared;
+        if (focus == null || focus === (prev.selected ?? prev.compared)) return;
+        slowNext.current = true;
+        s.focusTooth(focus);
+      }),
+    [],
+  );
 
   // initial framing, as soon as the orbit controls exist
   useEffect(() => {
@@ -57,8 +78,11 @@ export function CameraRig({ model }: { model: JawModel }) {
     controls.update();
     controls.enableDamping = true;
     const pose = poseFromStore(model);
+    const durationMs = slowNext.current ? FOLLOW_TWEEN_MS : TWEEN_MS;
+    slowNext.current = false;
     tween.current = {
       start: performance.now(),
+      durationMs,
       fromTarget: controls.target.clone(),
       fromPosition: camera.position.clone(),
       toTarget: pose.target,
@@ -69,8 +93,9 @@ export function CameraRig({ model }: { model: JawModel }) {
   useFrame(() => {
     const t = tween.current;
     if (!t || !controls) return;
-    const k = Math.min(1, (performance.now() - t.start) / TWEEN_MS);
-    const e = 1 - Math.pow(1 - k, 3);
+    const k = Math.min(1, (performance.now() - t.start) / t.durationMs);
+    // the slow follow eases in and out; view buttons snap in quickly and settle
+    const e = t.durationMs > TWEEN_MS ? k * k * (3 - 2 * k) : 1 - Math.pow(1 - k, 3);
     controls.target.lerpVectors(t.fromTarget, t.toTarget, e);
     // glide around the target rather than straight through it, so front ↔ top doesn't dive into the jaw
     const from = t.fromPosition.clone().sub(t.fromTarget), to = t.toPosition.clone().sub(t.toTarget);

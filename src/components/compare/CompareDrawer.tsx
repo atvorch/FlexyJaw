@@ -18,6 +18,7 @@ export function CompareDrawer() {
   const fdi = useJawStore((s) => s.compared);
   const adjustment = useJawStore((s) => (s.compared != null ? s.adjustments[s.compared] : undefined));
   const expanded = useJawStore((s) => s.compareExpanded);
+  const viewOnly = useJawStore((s) => s.viewOnly);
   const { closeCompare, setCompareExpanded, editTooth, resetTooth } = useJawStore.getState();
 
   const [preset, setPreset] = useState<ComparePreset>('front');
@@ -69,7 +70,9 @@ export function CompareDrawer() {
 
   return (
     <>
-      <aside className={`compare-drawer${open ? ' open' : ''}`}>
+      <aside className={`compare-drawer${open ? ' open' : ''}`} aria-hidden={!open}>
+        {/* fixed-width content, so the text doesn't reflow while the column animates its width */}
+        <div className="compare-drawer-inner">
         {open && (
           <>
             <header>
@@ -84,8 +87,12 @@ export function CompareDrawer() {
             {!expanded && viewer}
             {summary && <ChangeTable summary={summary} />}
             <div className="btns" style={{ marginTop: 12 }}>
-              <button onClick={() => editTooth(fdi!)}>Edit this tooth</button>
-              <button onClick={() => resetTooth(fdi!)}>Reset this tooth</button>
+              {!viewOnly && (
+                <>
+                  <button onClick={() => editTooth(fdi!)}>Edit this tooth</button>
+                  <button onClick={() => resetTooth(fdi!)}>Reset this tooth</button>
+                </>
+              )}
             </div>
             <p className="muted">
               Measured at the final stage, against the original plan. Directions are worked out from the curve of your arch, so
@@ -93,6 +100,7 @@ export function CompareDrawer() {
             </p>
           </>
         )}
+        </div>
       </aside>
       {open && expanded && (
         <CompareModal title={`Tooth ${fdi} · ${toothName(fdi!)}`} onClose={() => setCompareExpanded(false)}>

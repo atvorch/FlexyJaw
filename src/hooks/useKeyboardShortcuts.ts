@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useJawStore } from '../state/store';
+import { selectUnsaved, useJawStore } from '../state/store';
 
 /** Typing into these must not trigger letter shortcuts. */
 const isTextInput = (el: EventTarget | null) =>
@@ -20,9 +20,21 @@ export function useKeyboardShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const s = useJawStore.getState();
+      // while the save dialog is up, only Esc (close it) gets through
+      if (s.saveDialogOpen) {
+        if (e.key === 'Escape') s.setSaveDialogOpen(false);
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') e.preventDefault();
+        return;
+      }
       if (e.ctrlKey || e.metaKey) {
-        if (keepsNativeUndo(e.target)) return;
         const key = e.key.toLowerCase();
+        if (key === 's') {
+          // never the browser's "save page"; open our dialog when there is something to save
+          e.preventDefault();
+          if (selectUnsaved(s)) s.setSaveDialogOpen(true);
+          return;
+        }
+        if (keepsNativeUndo(e.target)) return;
         if (key === 'z' && !e.shiftKey) s.undo();
         else if (key === 'y' || (key === 'z' && e.shiftKey)) s.redo();
         else return;

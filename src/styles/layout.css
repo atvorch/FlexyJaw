@@ -18,4 +18,30 @@
     border-left: 0 !important;
     border-top: 1px solid var(--line);
   }
+  .versions-panel,
+  .versions-panel.collapsed {
+    width: 100%;
+    max-height: 40vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  /* stacked: the comparison drawer becomes a full-width block under the 3D view */
+  .compare-drawer.open {
+    width: 100%;
+    border-left-width: 0;
+    border-top: 1px solid var(--line);
+  }
+  .compare-drawer-inner {
+    width: 100%;
+    height: auto;
+  }
+  .versions-strip {
+    flex-direction: row;
+    justify-content: center;
+    padding: 8px 0;
+  }
+  .versions-strip-label {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
 }

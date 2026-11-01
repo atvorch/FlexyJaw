@@ -1,4 +1,28 @@
 import { Vector3, type Box3 } from 'three';
+import type { JawModel, ToothModel } from '../data/model';
+import { archFrame } from './analysis';
+
+/** Horizontal angle of a camera around its target: 0 = front (-y), + toward the patient's right (+x). */
+const azimuth = (pose: CameraPose) => Math.atan2(pose.position.x - pose.target.x, -(pose.position.y - pose.target.y));
+
+/**
+ * The front view swung sideways round the jaw until it faces one tooth from the cheek side.
+ * Only the horizontal angle changes (same target, height and distance as the front view), and never further
+ * round than the Left / Right views, even for back molars whose cheek side points slightly backward.
+ */
+export function toothFocusPose(model: JawModel, tooth: ToothModel, showOriginal: boolean, gapMm: number): CameraPose {
+  const front = cameraPose('front', model.bounds, showOriginal, gapMm);
+  const offset = front.position.clone().sub(front.target);
+  const horizontal = Math.hypot(offset.x, offset.y);
+  const { buccal } = archFrame(model, tooth);
+
+  const maxRight = azimuth(cameraPose('right', model.bounds, showOriginal, gapMm));
+  const maxLeft = azimuth(cameraPose('left', model.bounds, showOriginal, gapMm));
+  const angle = Math.min(maxRight, Math.max(maxLeft, Math.atan2(buccal.x, -buccal.y)));
+
+  const position = front.target.clone().add(new Vector3(Math.sin(angle) * horizontal, -Math.cos(angle) * horizontal, offset.z));
+  return { target: front.target, position };
+}
 
 /** Vertical offset of the original jaw, stacked above the adjusted one (-z is up). */
 export function originalJawOffsetZ(bounds: Box3, gapMm: number): number {

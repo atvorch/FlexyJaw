@@ -4,8 +4,8 @@ import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import type { ToothModel } from '../data/model';
 import { applyToPivot, isEdited } from '../domain/adjustments';
 import { adjustmentWeight, interpolateStageMatrix } from '../domain/stage';
-import { useJawStore } from '../state/store';
-import { COLORS, createToothMaterial } from './materials';
+import { selectFadeUpperJaw, useJawStore } from '../state/store';
+import { COLORS, FADED_OPACITY, createToothMaterial, stepFade } from './materials';
 import { raycastWhenVisible, scene } from './registry';
 
 /** A movement past this many pixels between press and release is an orbit drag, not a click. */
@@ -40,12 +40,14 @@ export function Tooth({ tooth }: { tooth: ToothModel }) {
     return () => void scene.pivots.delete(tooth.fdi);
   }, [tooth.fdi]);
 
-  useFrame(() => {
+  useFrame((_, dt) => {
     const s = useJawStore.getState();
     interpolateStageMatrix(tooth.stageMatrices, s.stage, stageGroup.current.matrix);
     stageGroup.current.matrixWorldNeedsUpdate = true;
     const weight = adjustmentWeight(s.stage, tooth.stageMatrices.length, s.applyAdjustments);
     applyToPivot(pivot.current, tooth, s.adjustments[tooth.fdi], weight);
+    // upper teeth step aside (fade) while a lower tooth is in focus
+    if (tooth.upper) stepFade(material, selectFadeUpperJaw(s) ? FADED_OPACITY : 1, dt);
   });
 
   const onClick = (e: ThreeEvent<MouseEvent>) => {

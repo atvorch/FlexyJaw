@@ -4,7 +4,7 @@ import { JawScene } from '../../scene/JawScene';
 import { scene } from '../../scene/registry';
 import { useJawStore } from '../../state/store';
 import { ChangesBar } from '../compare/ChangesBar';
-import { CompareDrawer } from '../compare/CompareDrawer';
+import { ShareButton } from './ShareButton';
 import { ViewToolbar } from './ViewToolbar';
 import { HistoryBar } from './HistoryBar';
 import { ShortcutHint } from './ShortcutHint';
@@ -15,7 +15,8 @@ const CLICK_SLOP_PX = 4;
 /** The 3D view plus everything overlaid on it. */
 export function Viewport({ error }: { error: string | null }) {
   const model = useJawStore((s) => s.model);
-  const compareOpen = useJawStore((s) => s.compared != null);
+  const viewOnly = useJawStore((s) => s.viewOnly);
+  const viewingOriginal = useJawStore((s) => s.viewingOriginal);
   const container = useRef<HTMLElement>(null);
   const pressedAt = useRef<{ x: number; y: number } | null>(null);
 
@@ -30,7 +31,7 @@ export function Viewport({ error }: { error: string | null }) {
   return (
     <main
       ref={container}
-      className={`viewport${compareOpen ? ' compare-open' : ''}`}
+      className="viewport"
       onPointerDown={(e) => (pressedAt.current = { x: e.clientX, y: e.clientY })}
     >
       {model ? (
@@ -50,14 +51,15 @@ export function Viewport({ error }: { error: string | null }) {
       )}
       <ViewToolbar />
       <ShortcutHint />
+      <ShareButton />
       <ToothTooltip container={container} />
       {model && (
         <div className="bottom-dock">
           <ChangesBar />
-          <HistoryBar />
+          {/* nothing can change in a shared view, so there is no history to scrub */}
+          {!viewOnly && !viewingOriginal && <HistoryBar />}
         </div>
       )}
-      <CompareDrawer />
     </main>
   );
 }

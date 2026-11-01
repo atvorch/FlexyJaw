@@ -17,6 +17,8 @@ export function ToothEditor() {
   const canEdit = useJawStore(selectCanEdit);
   const applyOn = useJawStore((s) => s.applyAdjustments);
   const mode = useJawStore((s) => s.gizmoMode);
+  const viewOnly = useJawStore((s) => s.viewOnly);
+  const viewingOriginal = useJawStore((s) => s.viewingOriginal);
   const s = useJawStore.getState();
 
   const tooth = model?.teeth.find((t) => t.fdi === selected);
@@ -30,7 +32,9 @@ export function ToothEditor() {
         Tooth {tooth.fdi} · {toothName(tooth.fdi)}
       </div>
 
-      {!canEdit ? (
+      {viewOnly ? (
+        <p className="muted">This is a view-only link, so teeth can't be changed here.</p>
+      ) : !canEdit ? (
         <div>
           <p className="muted">
             {applyOn
@@ -79,6 +83,7 @@ export function ToothEditor() {
           </div>
           <p className="muted">
             Adjustments apply to the final stage only, in the tooth's own frame. Playback blends them in over the last step.
+            {viewingOriginal && ' You are on the original plan: your first change starts a new saved version and the original stays as it is.'}
           </p>
         </>
       )}

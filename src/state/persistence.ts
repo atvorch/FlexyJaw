@@ -1,7 +1,11 @@
 import { isEdited, type Adjustments, type ToothAdjustment, type Vec3 } from '../domain/adjustments';
 
-/** Same key and shape as the original single-page editor, so saved adjustments carry over. */
-const STORAGE_KEY = 'jaw-editor-adjustments-v1';
+/** Named saves, newest last. */
+const SAVES_KEY = 'jaw-editor-saves-v1';
+/** Recovery copy of unsaved changes, in case the page closes without warning. Not a saved version. */
+const DRAFT_KEY = 'jaw-editor-draft-v1';
+/** The old always-on autosave. Read once to seed the first save; never written or deleted. */
+const LEGACY_AUTOSAVE_KEY = 'jaw-editor-adjustments-v1';
 const DEG = 180 / Math.PI;
 
 interface StoredAdjustment {
@@ -39,22 +43,99 @@ export function deserialize(data: unknown): Adjustments {
   return out;
 }
 
-export function loadAdjustments(): Adjustments {
+/** A named snapshot of every tooth adjustment, saved by the user. */
+export interface SavedVersion {
+  id: string;
+  name: string;
+  savedAt: number;
+  adjustments: Adjustments;
+}
+
+interface StoredVersion {
+  id: string;
+  name: string;
+  savedAt: number;
+  teeth: StoredAdjustments;
+}
+
+const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+
+function readStoredVersions(): StoredVersion[] | null {
+  const raw = localStorage.getItem(SAVES_KEY);
+  if (raw == null) return null;
+  const list = JSON.parse(raw);
+  return Array.isArray(list) ? list : [];
+}
+
+/**
+ * The user's saved versions, oldest first. On the very first run, adjustments left by the old autosave
+ * become the first saved version so nothing is lost.
+ */
+export function loadVersions(): SavedVersion[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? deserialize(JSON.parse(raw)) : {};
+    const stored = readStoredVersions();
+    if (stored) {
+      return stored
+        .filter((v) => v && typeof v.id === 'string' && typeof v.name === 'string')
+        .map((v) => ({ id: v.id, name: v.name, savedAt: Number(v.savedAt) || 0, adjustments: deserialize(v.teeth) }));
+    }
+    const legacy = localStorage.getItem(LEGACY_AUTOSAVE_KEY);
+    const adjustments = legacy ? deserialize(JSON.parse(legacy)) : {};
+    const seeded = Object.keys(adjustments).length
+      ? [{ id: newId(), name: 'Changes before named saves', savedAt: Date.now(), adjustments }]
+      : [];
+    writeVersions(seeded);
+    return seeded;
   } catch {
-    return {};
+    return [];
   }
 }
 
-export function saveAdjustments(adjustments: Adjustments) {
+/** @returns false when storage is unavailable (private mode, blocked site data, quota). */
+export function writeVersions(versions: SavedVersion[]): boolean {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(serialize(adjustments)));
+    const stored: StoredVersion[] = versions.map((v) => ({ id: v.id, name: v.name, savedAt: v.savedAt, teeth: serialize(v.adjustments) }));
+    localStorage.setItem(SAVES_KEY, JSON.stringify(stored));
+    return true;
   } catch {
-    // storage unavailable (private mode, blocked site data): adjustments just won't survive a reload
+    return false;
   }
 }
+
+/** Unsaved changes kept for recovery, with the version they were made on. */
+export interface Draft {
+  baseVersionId: string | null;
+  adjustments: Adjustments;
+  at: number;
+}
+
+export function readDraft(): Draft | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    return { baseVersionId: typeof d.baseVersionId === 'string' ? d.baseVersionId : null, adjustments: deserialize(d.teeth), at: Number(d.at) || 0 };
+  } catch {
+    return null;
+  }
+}
+
+/** Store or (with null) clear the recovery copy. Failing to store just means no recovery. */
+export function writeDraft(draft: Draft | null) {
+  try {
+    if (!draft) localStorage.removeItem(DRAFT_KEY);
+    else localStorage.setItem(DRAFT_KEY, JSON.stringify({ baseVersionId: draft.baseVersionId, teeth: serialize(draft.adjustments), at: draft.at }));
+  } catch {
+    // storage unavailable
+  }
+}
+
+export const createVersion = (name: string, adjustments: Adjustments): SavedVersion => ({
+  id: newId(),
+  name,
+  savedAt: Date.now(),
+  adjustments,
+});
 
 export function downloadAdjustments(adjustments: Adjustments) {
   const body = { format: 'jaw-editor-adjustments', version: 1, teeth: serialize(adjustments) };

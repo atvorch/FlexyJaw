@@ -10,6 +10,7 @@ import './styles/sidebar.css';
 import './styles/viewport.css';
 import './styles/compare.css';
 import './styles/report.css';
+import './styles/saves.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

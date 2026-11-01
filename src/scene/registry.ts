@@ -16,9 +16,11 @@ export const noRaycast = () => {};
 
 /**
  * three.js picks hidden objects too (it only checks layers), so a hidden arch would still catch clicks.
- * Use as a mesh's `raycast` to make it pickable only while it and all its parents are visible.
+ * Use as a mesh's `raycast` to make it pickable only while it and all its parents are visible, and while it
+ * isn't faded out of the way (clicks then reach the teeth it was fading to reveal).
  */
 export function raycastWhenVisible(this: Mesh, raycaster: Raycaster, intersects: Intersection[]) {
   for (let o: Object3D | null = this; o; o = o.parent) if (!o.visible) return;
+  if (!Array.isArray(this.material) && this.material.opacity < 0.5) return;
   Mesh.prototype.raycast.call(this, raycaster, intersects);
 }
