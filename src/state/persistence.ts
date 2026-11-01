@@ -96,24 +96,34 @@ export function loadVersions(): SavedVersion[] {
   }
 }
 
+const contentKey = (adjustments: Adjustments) => JSON.stringify(serialize(adjustments));
+
 /**
  * Saves live in each browser, so the changes published with the site (src/data/publishedPlan.json) are added
- * once as a saved version in every browser that opens it. Skipped where an identical version already exists,
- * and never re-added after the user deletes it.
+ * as a saved version in every browser that opens it, once per published content. A newer publish replaces the
+ * copy a browser got earlier unless the user has changed that copy, in which case it is added alongside.
+ * Skipped where an identical version already exists.
  */
 function withPublishedPlan(versions: SavedVersion[]): SavedVersion[] {
   const seenKey = `${PUBLISHED_SEEN_KEY}:${publishedPlan.id}`;
-  if (localStorage.getItem(seenKey)) return versions;
-  localStorage.setItem(seenKey, '1');
-  const teeth = JSON.stringify(serialize(deserialize(publishedPlan.teeth)));
-  if (versions.some((v) => v.id === publishedPlan.id || JSON.stringify(serialize(v.adjustments)) === teeth)) return versions;
-  const published: SavedVersion = {
-    id: publishedPlan.id,
-    name: publishedPlan.name,
-    savedAt: publishedPlan.savedAt,
-    adjustments: deserialize(publishedPlan.teeth),
-  };
-  const next = [...versions, published].sort((a, b) => a.savedAt - b.savedAt);
+  const adjustments = deserialize(publishedPlan.teeth);
+  const content = contentKey(adjustments);
+  // what this browser was last given; '1' is the flag earlier builds stored, before the content was kept
+  const seen = localStorage.getItem(seenKey);
+  if (seen === content) return versions;
+  localStorage.setItem(seenKey, content);
+
+  const published: SavedVersion = { id: publishedPlan.id, name: publishedPlan.name, savedAt: publishedPlan.savedAt, adjustments };
+  const earlier = versions.find((v) => v.id === publishedPlan.id);
+  let next: SavedVersion[];
+  if (earlier && seen != null && (seen === '1' || contentKey(earlier.adjustments) === seen)) {
+    next = versions.map((v) => (v === earlier ? published : v));
+  } else if (versions.some((v) => contentKey(v.adjustments) === content)) {
+    return versions;
+  } else {
+    next = [...versions, earlier ? { ...published, id: `${published.id}-${published.savedAt}` } : published];
+  }
+  next.sort((a, b) => a.savedAt - b.savedAt);
   writeVersions(next);
   return next;
 }

@@ -1,12 +1,12 @@
 {
   "id": "published-plan",
   "name": "Changes before named saves",
-  "savedAt": 1793554407414,
+  "savedAt": 1793575742967,
   "teeth": {
-    "11": { "rotateDeg": [6, 0.6, 0], "moveMm": [0, -0.2, 0.4] },
+    "11": { "rotateDeg": [6, 0.6, 0], "moveMm": [0, -0.5, 0.3] },
     "12": { "rotateDeg": [13, 1, -3.5], "moveMm": [0, -0.8, 0.3] },
     "13": { "rotateDeg": [0, 0, 0], "moveMm": [0, 0, 0.1] },
-    "21": { "rotateDeg": [0, 0, 5], "moveMm": [0, 0, 0] },
+    "21": { "rotateDeg": [-0.5, 1, 5], "moveMm": [0, 0, 0.1] },
     "22": { "rotateDeg": [-8, 10, 5], "moveMm": [0.3, 0, 0.2] },
     "43": { "rotateDeg": [-8.36, -5.2, 4.15], "moveMm": [0, 0, 0] }
   }
