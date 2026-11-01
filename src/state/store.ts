@@ -127,6 +127,22 @@ export interface JawState {
 /** True while the working adjustments differ from the last save / load (never in view-only mode). */
 export const selectUnsaved = (s: JawState) => !s.viewOnly && changedTeeth(s.savedBaseline, s.adjustments).length > 0;
 
+/** Whether a version the user switched away from still holds unsaved edits, waiting for it to be opened again. */
+export const selectHasParkedEdits = (s: JawState, id: string) => {
+  const parked = s.stashedHistories[id];
+  const version = s.versions.find((v) => v.id === id);
+  return !!parked && !!version && changedTeeth(version.adjustments, parked.history[parked.index].adjustments).length > 0;
+};
+
+/** Unsaved edits anywhere: in the open version, or parked in one the user switched away from. */
+export const selectAnyUnsaved = (s: JawState) => {
+  if (s.viewOnly) return false;
+  if (selectUnsaved(s) || s.versions.some((v) => selectHasParkedEdits(s, v.id))) return true;
+  // edits made with no saved version to belong to
+  const loose = s.stashedHistories[UNSAVED_KEY];
+  return !!loose && Object.keys(loose.history[loose.index].adjustments).length > 0;
+};
+
 /**
  * What to open after deleting a version: the one saved just before it, or the next one if it was the oldest.
  * null when nothing else is left.
@@ -171,20 +187,15 @@ const historyKeyOf = (s: Pick<JawState, 'viewingOriginal' | 'currentVersionId'>)
 
 /**
  * Put the open timeline away under its key and bring out the one for `key`, so the history shows only the
- * changes made in the version being opened. A version opened again resumes its own timeline; if its saved
- * state differs from where that timeline stood (unsaved edits were discarded), an "opened" step is added.
+ * changes made in the version being opened. A version opened again resumes its own timeline exactly where it
+ * was left, unsaved edits included, so switching between versions never loses anything; a version opened for
+ * the first time starts at its saved state.
  */
 function switchTimeline(s: JawState, key: string, adjustments: Adjustments, label: string) {
   const stashedHistories = { ...s.stashedHistories, [historyKeyOf(s)]: { history: s.history, index: s.historyIndex } };
   const resumed = stashedHistories[key];
   delete stashedHistories[key];
-  const step: HistoryEntry = { adjustments, label, at: Date.now() };
-  let history: HistoryEntry[] = [step];
-  if (resumed) {
-    const atSavedState = changedTeeth(resumed.history[resumed.index].adjustments, adjustments).length === 0;
-    history = atSavedState ? resumed.history.slice(0, resumed.index + 1) : [...resumed.history.slice(0, resumed.index + 1), step];
-  }
-  const historyIndex = history.length - 1;
+  const { history, index: historyIndex } = resumed ?? { history: [{ adjustments, label, at: Date.now() }], index: 0 };
   // the entry's own object, so the change watcher doesn't mistake the switch for an edit
   return { stashedHistories, history, historyIndex, adjustments: history[historyIndex].adjustments };
 }

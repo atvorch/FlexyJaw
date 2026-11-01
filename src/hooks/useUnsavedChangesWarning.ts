@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import { selectUnsaved, useJawStore } from '../state/store';
+import { selectAnyUnsaved, useJawStore } from '../state/store';
 
 /**
- * While there are unsaved changes, leaving the page (back button, another address, reload, closing the
- * tab) makes the browser ask first. Browsers show their own fixed wording; a custom message isn't allowed.
+ * While there are unsaved changes (in the open version or left in another), leaving the page (back button,
+ * another address, reload, closing the tab) makes the browser ask first. Browsers show their own fixed wording; a custom message isn't allowed.
  */
 export function useUnsavedChangesWarning() {
-  const unsaved = useJawStore(selectUnsaved);
+  const unsaved = useJawStore(selectAnyUnsaved);
   useEffect(() => {
     if (!unsaved) return;
     const onBeforeUnload = (e: BeforeUnloadEvent) => {

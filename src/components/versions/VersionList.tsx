@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SavedVersion } from '../../state/persistence';
-import { selectUnsaved, useJawStore, versionAfterDeleting } from '../../state/store';
+import { selectHasParkedEdits, selectUnsaved, useJawStore, versionAfterDeleting } from '../../state/store';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
 const when = (t: number) =>
@@ -10,7 +10,6 @@ const teethCount = (v: SavedVersion) => {
   return `${n} ${n === 1 ? 'tooth' : 'teeth'} changed`;
 };
 
-type Pending = { kind: 'delete' | 'load'; version: SavedVersion } | null;
 
 /** Text box that replaces a version's name while renaming. Enter / blur keeps the new name, Esc cancels. */
 function RenameField({ version, onDone }: { version: SavedVersion; onDone(): void }) {
@@ -54,28 +53,26 @@ function DeleteCurrentNote({ versions, id, unsaved }: { versions: SavedVersion[]
   return (
     <p>
       You'll switch to <strong>{next.name}</strong>.
-      {unsaved && " Your unsaved changes will be replaced; Undo brings them back."}
+      {unsaved && ' The unsaved changes in this version go with it.'}
     </p>
   );
 }
 
-/** Every saved version by save date, oldest first. Click a card to switch to it; rename or delete from its footer. */
+/**
+ * Every saved version by save date, oldest first. Click a card to switch to it; rename or delete from its footer.
+ * Switching never asks: unsaved edits stay with their version and are there again when it is reopened.
+ */
 export function VersionList() {
   const versions = useJawStore((s) => s.versions);
   const currentId = useJawStore((s) => s.currentVersionId);
   const unsaved = useJawStore(selectUnsaved);
+  // versions switched away from with unsaved edits still in them, as one string so unrelated updates don't re-render
+  const parkedIds = useJawStore((s) => s.versions.filter((v) => selectHasParkedEdits(s, v.id)).map((v) => v.id).join(' '));
+  const parked = (id: string) => parkedIds.split(' ').includes(id);
   const { loadVersion, deleteVersion } = useJawStore.getState();
-  // the action waiting for the user to confirm it
-  const [pending, setPending] = useState<Pending>(null);
+  // the version waiting for the user to confirm deleting it
+  const [deleting, setDeleting] = useState<SavedVersion | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
-
-  const load = (v: SavedVersion) => (unsaved ? setPending({ kind: 'load', version: v }) : loadVersion(v.id));
-  const confirmPending = () => {
-    if (!pending) return;
-    if (pending.kind === 'delete') deleteVersion(pending.version.id);
-    else loadVersion(pending.version.id);
-    setPending(null);
-  };
 
   return (
     <>
@@ -86,8 +83,9 @@ export function VersionList() {
           {[...versions].sort((a, b) => a.savedAt - b.savedAt).map((v) => {
             const current = v.id === currentId;
             const renaming = v.id === renamingId;
-            // the open version, unchanged, or one being renamed: nothing to switch to
-            const idle = (current && !unsaved) || renaming;
+            // the open version, or one being renamed: nothing to switch to (Undo / history step back edits)
+            const idle = current || renaming;
+            const edited = current ? unsaved : parked(v.id);
             return (
               <li
                 key={v.id}
@@ -96,12 +94,12 @@ export function VersionList() {
                 tabIndex={0}
                 aria-current={current ? 'true' : undefined}
                 aria-disabled={idle || undefined}
-                title={renaming ? undefined : idle ? 'This version is open' : current ? 'Revert to the saved version' : `Switch to “${v.name}”`}
-                onClick={() => !idle && load(v)}
+                title={renaming ? undefined : idle ? 'This version is open' : `Switch to “${v.name}”`}
+                onClick={() => !idle && loadVersion(v.id)}
                 onKeyDown={(e) => {
                   if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
                   e.preventDefault();
-                  if (!idle) load(v);
+                  if (!idle) loadVersion(v.id);
                 }}
               >
                 <div className="version-head">
@@ -110,8 +108,13 @@ export function VersionList() {
                   ) : (
                     <span className="version-name">{v.name}</span>
                   )}
-                  {current && !renaming && (
-                    <span className={`version-badge${unsaved ? ' unsaved' : ''}`}>{unsaved ? 'edited' : 'current'}</span>
+                  {!renaming && (current || edited) && (
+                    <span
+                      className={`version-badge${edited ? ' unsaved' : ''}`}
+                      title={edited ? 'Has changes that are not saved yet' : undefined}
+                    >
+                      {edited ? 'edited' : 'current'}
+                    </span>
                   )}
                 </div>
                 <span className="muted">{when(v.savedAt)}</span>
@@ -135,7 +138,7 @@ export function VersionList() {
                       title="Delete this version"
                       onClick={(e) => {
                         e.stopPropagation(); // deleting must not also switch to it
-                        setPending({ kind: 'delete', version: v });
+                        setDeleting(v);
                       }}
                       onKeyDown={(e) => e.stopPropagation()}
                     >
@@ -149,37 +152,25 @@ export function VersionList() {
         </ul>
       )}
 
-      {pending?.kind === 'delete' && (
+      {deleting && (
         <ConfirmDialog
           title="Delete saved version?"
           confirmLabel="Delete"
           danger
-          onConfirm={confirmPending}
-          onCancel={() => setPending(null)}
+          onConfirm={() => {
+            deleteVersion(deleting.id);
+            setDeleting(null);
+          }}
+          onCancel={() => setDeleting(null)}
         >
           <p className="confirm-target">
-            <strong>{pending.version.name}</strong>
+            <strong>{deleting.name}</strong>
             <span className="muted">
-              {when(pending.version.savedAt)} · {teethCount(pending.version)}
+              {when(deleting.savedAt)} · {teethCount(deleting)}
             </span>
           </p>
           <p>This removes the saved version for good. It can't be undone.</p>
-          {pending.version.id === currentId && <DeleteCurrentNote versions={versions} id={pending.version.id} unsaved={unsaved} />}
-        </ConfirmDialog>
-      )}
-
-      {pending?.kind === 'load' && (
-        <ConfirmDialog
-          title="Discard unsaved changes?"
-          confirmLabel={pending.version.id === currentId ? 'Revert' : 'Switch'}
-          danger
-          onConfirm={confirmPending}
-          onCancel={() => setPending(null)}
-        >
-          <p>
-            You have changes that aren't saved. Switching to <strong>{pending.version.name}</strong> replaces them; you can still
-            get them back with Undo.
-          </p>
+          {deleting.id === currentId && <DeleteCurrentNote versions={versions} id={deleting.id} unsaved={unsaved} />}
         </ConfirmDialog>
       )}
     </>
