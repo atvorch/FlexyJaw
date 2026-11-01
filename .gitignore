@@ -1,5 +1,4 @@
 node_modules/
-dist/
 *.tsbuildinfo
 
 # exported adjustments are personal snapshots, not sources
