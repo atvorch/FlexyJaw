@@ -59,7 +59,7 @@ export function ChangesBar() {
             // lit when the tooth is open in the comparison or selected on the jaw
             className={`tooth-card${tooth.fdi === compared || tooth.fdi === selected ? ' on' : ''}`}
             title={`${toothName(tooth.fdi)}: open the comparison`}
-            // the camera follows on its own if the tooth isn't near the middle of the view
+            // the camera swings round to face it (CameraRig)
             onClick={() => (compared === tooth.fdi ? closeCompare() : openCompare(tooth.fdi))}
           >
             <ToothThumb model={model} tooth={tooth} adjustment={adjustment} />
