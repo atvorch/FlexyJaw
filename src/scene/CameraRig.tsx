@@ -4,7 +4,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import type { JawModel } from '../data/model';
 import { cameraPose, toothFocusPose } from '../domain/layout';
-import { useJawStore } from '../state/store';
+import { selectStackOriginal, useJawStore } from '../state/store';
 
 const TWEEN_MS = 450;
 /** Following a selected tooth is a slower, gentler move than clicking a view button. */
@@ -22,8 +22,9 @@ interface Tween {
 const poseFromStore = (model: JawModel) => {
   const s = useJawStore.getState();
   const focused = s.cameraFocus != null ? model.teeth.find((t) => t.fdi === s.cameraFocus) : undefined;
-  if (focused) return toothFocusPose(model, focused, s.showOriginal, s.originalGapMm);
-  return cameraPose(s.cameraView, model.bounds, s.showOriginal, s.originalGapMm);
+  const stacked = selectStackOriginal(s);
+  if (focused) return toothFocusPose(model, focused, stacked, s.originalGapMm);
+  return cameraPose(s.cameraView, model.bounds, stacked, s.originalGapMm);
 };
 
 /**
@@ -46,6 +47,15 @@ export function CameraRig({ model }: { model: JawModel }) {
         if (focus == null || focus === (prev.selected ?? prev.compared)) return;
         slowNext.current = true;
         s.focusTooth(focus);
+      }),
+    [],
+  );
+
+  // the original jaw appeared above or went away (toggle, or opening / leaving the original plan): reframe
+  useEffect(
+    () =>
+      useJawStore.subscribe((s, prev) => {
+        if (selectStackOriginal(s) !== selectStackOriginal(prev)) s.requestView(s.activeView ?? 'front');
       }),
     [],
   );

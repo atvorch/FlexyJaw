@@ -109,22 +109,63 @@
   align-items: center;
   gap: 6px;
 }
+/* the original plan: same frame as a saved version, with an icon and a read-only note */
 .original-card {
-  border-style: dashed;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--chip);
+  line-height: 1.35;
 }
 .original-card.current {
-  border-style: solid;
+  border-color: var(--accent);
+  background: var(--panel);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.original-card:focus:not(:focus-visible) {
+  outline: none;
+}
+.original-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.original-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.original-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 .read-only-tag {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  margin-top: 3px;
   font-size: 11px;
   color: var(--muted);
 }
 .read-only-tag svg {
+  flex: none;
   width: 12px;
   height: 12px;
+}
+.toggles-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
 }
 .versions-empty {
   margin: 4px;

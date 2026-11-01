@@ -2,7 +2,7 @@ import { Html } from '@react-three/drei';
 import { Box3, Vector3, type Camera } from 'three';
 import type { JawModel } from '../data/model';
 import { originalJawOffsetZ } from '../domain/layout';
-import { useJawStore } from '../state/store';
+import { selectStackOriginal, useJawStore } from '../state/store';
 
 /** Rough label width; labels are right-aligned to their anchor so this keeps them from leaving the view. */
 const LABEL_W = 90;
@@ -31,9 +31,11 @@ function leftOfBox(box: Box3) {
   };
 }
 
-/** "Adjusted" / "Original" tags beside each jaw. */
+/** "Adjusted" / "Original" tags beside each jaw (just "Original" while the original plan is open). */
 export function JawLabels({ model }: { model: JawModel }) {
-  const showOriginal = useJawStore((s) => s.showOriginal);
+  const showOriginal = useJawStore(selectStackOriginal);
+  // on the original plan the main jaw is the original itself
+  const viewingOriginal = useJawStore((s) => s.viewingOriginal);
   const gap = useJawStore((s) => s.originalGapMm);
   const adjustedBox = model.bounds;
   const originalBox = adjustedBox.clone().translate(new Vector3(0, 0, originalJawOffsetZ(adjustedBox, gap)));
@@ -42,7 +44,7 @@ export function JawLabels({ model }: { model: JawModel }) {
   return (
     <>
       <Html position={center} calculatePosition={leftOfBox(adjustedBox)} zIndexRange={[4, 0]} pointerEvents="none">
-        <div className="jaw-label">Adjusted</div>
+        <div className="jaw-label">{viewingOriginal ? 'Original' : 'Adjusted'}</div>
       </Html>
       {showOriginal && (
         <Html

@@ -4,13 +4,13 @@ import { useFrame } from '@react-three/fiber';
 import type { JawModel } from '../data/model';
 import { originalJawOffsetZ } from '../domain/layout';
 import { interpolateStageMatrix } from '../domain/stage';
-import { useJawStore } from '../state/store';
+import { selectStackOriginal, useJawStore } from '../state/store';
 import { gumMaterial, originalToothMaterial } from './materials';
 import { noRaycast } from './registry';
 
 /** The unadjusted plan, stacked above the editable jaw for side-by-side comparison. Not interactive. */
 export function OriginalJaw({ model }: { model: JawModel }) {
-  const show = useJawStore((s) => s.showOriginal);
+  const show = useJawStore(selectStackOriginal);
   const gap = useJawStore((s) => s.originalGapMm);
   const visibility = useJawStore((s) => s.visibility);
   const teeth = useRef<(Mesh | null)[]>([]);

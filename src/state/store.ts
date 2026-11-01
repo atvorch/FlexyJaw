@@ -146,6 +146,12 @@ export const selectFadeUpperJaw = (s: JawState) => {
   return focus != null && !isUpper(focus);
 };
 
+/**
+ * Whether the original jaw is stacked above the main one. Not while the original plan itself is open: the
+ * main jaw then *is* the original, with nothing adjusted to compare against.
+ */
+export const selectStackOriginal = (s: JawState) => s.showOriginal && !s.viewingOriginal;
+
 /** Teeth can only be changed at the final stage, with adjustments shown, and never from a view-only link. */
 export const selectCanEdit = (s: JawState) => !s.viewOnly && !!s.model && s.applyAdjustments && s.stage === lastStage(s);
 
@@ -260,10 +266,8 @@ export const useJawStore = create<JawState>()((set, get) => ({
     }),
   setApplyAdjustments: (applyAdjustments) => set({ applyAdjustments }),
   setHighlightAdjusted: (highlightAdjusted) => set({ highlightAdjusted }),
-  setShowOriginal: (showOriginal) => {
-    set({ showOriginal });
-    get().requestView(get().activeView ?? 'front');
-  },
+  // the camera reframes itself whenever the stacking changes (see CameraRig)
+  setShowOriginal: (showOriginal) => set({ showOriginal }),
   setOriginalGap: (originalGapMm) => set({ originalGapMm }),
   requestView: (view) =>
     set((s) => {
