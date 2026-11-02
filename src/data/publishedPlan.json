@@ -1,16 +1,18 @@
 {
   "id": "published-plan",
   "name": "Changes Nov 1, 11:39 PM",
-  "savedAt": 1793577421155,
+  "savedAt": 1793604184000,
   "teeth": {
     "11": { "rotateDeg": [6, 0.6, 0], "moveMm": [0, -0.5, 0.3] },
     "12": { "rotateDeg": [12, 1, -3.5], "moveMm": [0, -0.8, 0.4] },
+    "13": { "rotateDeg": [0, 0, 0], "moveMm": [0, 0, 0.1] },
     "21": { "rotateDeg": [-0.5, 1, 5], "moveMm": [0, 0, 0.1] },
-    "22": { "rotateDeg": [-8, 10, 5], "moveMm": [0.3, 0, 0.2] },
-    "31": { "rotateDeg": [2, 0.5, 0], "moveMm": [0, -0.1, -0.1] },
-    "32": { "rotateDeg": [1, -2.5, -7.5], "moveMm": [0, 0, 0] },
+    "22": { "rotateDeg": [-7, 10, 4.5], "moveMm": [0.3, 0, 0.2] },
+    "31": { "rotateDeg": [2, 0.5, 0], "moveMm": [0, -0.3, -0.1] },
+    "32": { "rotateDeg": [1, -3.5, -8.5], "moveMm": [0, -0.1, 0] },
+    "33": { "rotateDeg": [0, 0, 0], "moveMm": [0, 0, 0.2] },
     "41": { "rotateDeg": [-1.13, -0.41, -0.27], "moveMm": [0, 0.1, 0] },
-    "42": { "rotateDeg": [0, 0, 0], "moveMm": [0, 0, 0.1] },
-    "43": { "rotateDeg": [-8.36, -5.2, 4.15], "moveMm": [0, 0, 0] }
+    "42": { "rotateDeg": [-1.5, 0, 3], "moveMm": [0, 0.1, 0.1] },
+    "43": { "rotateDeg": [-4, -7, -3], "moveMm": [-0.1, 0.4, 0] }
   }
 }
