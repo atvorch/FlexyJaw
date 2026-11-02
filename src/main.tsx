@@ -6,7 +6,6 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './styles/theme.css';
 import './styles/layout.css';
-import './styles/sidebar.css';
 import './styles/viewport.css';
 import './styles/compare.css';
 import './styles/report.css';

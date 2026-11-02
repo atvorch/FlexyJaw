@@ -1,5 +1,5 @@
 /*
- * drawer: a column in the page layout between the 3D view and the sidebar. Opening it grows its width,
+ * drawer: a column in the page layout at the right of the 3D view. Opening it grows its width,
  * which narrows the 3D view instead of covering it.
  */
 .compare-drawer {
@@ -41,6 +41,39 @@
 }
 .compare-drawer p.muted {
   margin-top: 10px;
+}
+/* editing controls for the selected tooth, at the top of the panel */
+.tooth-editor {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.tooth-editor p.muted {
+  font-size: 12px;
+  line-height: 1.45;
+}
+.slider-row {
+  display: grid;
+  grid-template-columns: 92px 1fr 62px;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.slider-row input[type='number'] {
+  width: 62px;
+  font: inherit;
+  color: var(--text);
+  background: var(--chip);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 5px;
+}
+.drawer-section {
+  margin: 14px 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
 }
 
 /* before / after picture */

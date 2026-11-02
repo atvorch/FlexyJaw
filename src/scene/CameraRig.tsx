@@ -7,7 +7,7 @@ import { cameraPose, toothFocusPose } from '../domain/layout';
 import { selectStackOriginal, useJawStore } from '../state/store';
 
 const TWEEN_MS = 450;
-/** Following a tooth opened from the adjusted-teeth panel is a slower, gentler move than clicking a view button. */
+/** Following a tooth picked from the Teeth chart or a card is a slower, gentler move than clicking a view button. */
 const FOLLOW_TWEEN_MS = 1200;
 
 interface Tween {
@@ -29,7 +29,7 @@ const poseFromStore = (model: JawModel) => {
 
 /**
  * Frames the jaw on load, glides to a preset view or to face one tooth whenever one is requested, and slowly
- * swings round to face each tooth opened from the adjusted-teeth panel.
+ * swings round to face each tooth picked from the Teeth chart or the adjusted-teeth cards.
  */
 export function CameraRig({ model }: { model: JawModel }) {
   const camera = useThree((s) => s.camera);
@@ -39,14 +39,14 @@ export function CameraRig({ model }: { model: JawModel }) {
   const framed = useRef(false);
   const slowNext = useRef(false);
 
-  // a tooth opened from the adjusted-teeth panel: swing round to face it, slowly. Picking a tooth on the jaw
-  // or in the chart leaves the camera where the user put it.
+  // a tooth picked from the Teeth chart or an adjusted-teeth card: swing round to face it, slowly. Picking a
+  // tooth on the jaw itself leaves the camera where the user put it.
   useEffect(
     () =>
       useJawStore.subscribe((s, prev) => {
-        if (s.compared == null || s.compared === prev.compared) return;
+        if (!s.followRequest || s.followRequest === prev.followRequest) return;
         slowNext.current = true;
-        s.focusTooth(s.compared);
+        s.focusTooth(s.followRequest.fdi);
       }),
     [],
   );

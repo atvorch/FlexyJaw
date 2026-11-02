@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import type { Group } from 'three';
+import { Color, type Group } from 'three';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import type { ToothModel } from '../data/model';
 import { applyToPivot, isEdited } from '../domain/adjustments';
@@ -10,6 +10,8 @@ import { raycastWhenVisible, scene } from './registry';
 
 /** A movement past this many pixels between press and release is an orbit drag, not a click. */
 const CLICK_SLOP_PX = 4;
+/** How quickly a highlight fades in or out (per second; about a fifth of a second to settle). */
+const HIGHLIGHT_FADE_RATE = 14;
 
 /**
  * One editable tooth: stage transform → pivot (user adjustment around the tooth centre) → mesh.
@@ -31,11 +33,13 @@ export function Tooth({ tooth }: { tooth: ToothModel }) {
   );
   const hovered = useJawStore((s) => s.hovered === tooth.fdi);
 
+  // where the highlight is heading; the colours ease towards it frame by frame (see useFrame below)
+  const target = useMemo(() => ({ color: new Color(), emissive: new Color() }), []);
   useEffect(() => {
-    material.color.copy(lit ? COLORS.toothLit : realistic ? REAL.tooth : COLORS.tooth);
-    material.emissive.copy(lit ? COLORS.emissiveLit : hovered ? COLORS.emissiveHover : COLORS.none);
-    setToothShine(material, shine);
-  }, [material, realistic, shine, lit, hovered]);
+    target.color.copy(lit ? COLORS.toothLit : realistic ? REAL.tooth : COLORS.tooth);
+    target.emissive.copy(lit ? COLORS.emissiveLit : hovered ? COLORS.emissiveHover : COLORS.none);
+  }, [target, realistic, lit, hovered]);
+  useEffect(() => setToothShine(material, shine), [material, shine]);
   useEffect(() => () => material.dispose(), [material]);
 
   useEffect(() => {
@@ -51,6 +55,10 @@ export function Tooth({ tooth }: { tooth: ToothModel }) {
     applyToPivot(pivot.current, tooth, s.adjustments[tooth.fdi], weight);
     // upper teeth step aside (fade) while a lower tooth is in focus
     if (tooth.upper) stepFade(material, selectFadeUpperJaw(s) ? FADED_OPACITY : 1, dt);
+    // highlights (hover, selection, "highlight adjusted") fade in and out instead of switching
+    const k = 1 - Math.exp(-dt * HIGHLIGHT_FADE_RATE);
+    material.color.lerp(target.color, k);
+    material.emissive.lerp(target.emissive, k);
   });
 
   const onClick = (e: ThreeEvent<MouseEvent>) => {

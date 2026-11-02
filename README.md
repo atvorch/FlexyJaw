@@ -42,9 +42,8 @@ src/
     AdjustedJaw / OriginalJaw / GumDeformer / ToothGizmo / CameraRig / StagePlayer / JawLabels / Lighting
     materials.ts, registry.ts, colorSetup.ts
   components/  DOM UI
-    viewport/      Viewport (canvas + overlays), ViewToolbar, HistoryBar, ShortcutHint, ToothTooltip
-    sidebar/       Sidebar, StageControls, DisplayToggles, ToothChart, ToothEditor, SliderRow, AdjustmentsPanel, SaveBar
-    versions/      VersionsPanel (collapsible left panel), VersionList
+    viewport/      Viewport (canvas + overlays), ViewToolbar, VisibilityToolbar, AdjustmentToolbar, LookSwitch, ShineSlider, ToothChart, StageBar, StageControls, SummaryButton, ShortcutHint, ToothTooltip
+    versions/      VersionsPanel (collapsible left panel), VersionList, OriginalCard, HistoryBar, VersionActions, SaveBar
     saves/         SaveDialog (overwrite current version or save as new)
     compare/       ChangesBar, CompareDrawer, CompareViewer (before/after divider), CompareModal, ChangeTable
   hooks/       useKeyboardShortcuts
@@ -55,13 +54,13 @@ Per-frame work (stage playback, tooth transforms, gum deformation) reads the sto
 
 ## Features
 
-- Stage slider and playback (0–17); gums deform per stage.
-- Select a tooth (click it or use the tooth chart) and rotate or move it with the gizmo or sliders. Editing is limited to the final stage.
-- Nothing is saved automatically. Save (button at the bottom of the sidebar, or Ctrl+S) either overwrites the current version or saves a new named one; saved versions are listed in the collapsible left panel: click a card to switch to it (unsaved edits stay with their version, marked "edited", and are back when you reopen it; the Original plan works the same way), or rename / delete it from the card. While anything is unsaved, the sidebar says so and leaving the page asks first. Adjustments can also be exported or imported as JSON.
-- Toggles: apply adjustments (A), highlight adjusted teeth (H), show the original jaw above with an adjustable gap, gums / upper / lower.
+- Stage slider and playback (0–17), under the teeth chart while the Original plan is open; gums deform per stage.
+- Select a tooth (click it on the jaw, in the Teeth chart or on its adjusted-tooth card) and the tooth panel opens at the right: Rotate / Move gizmo switch (R / G), rotate and move sliders with number boxes, reset, and for an adjusted tooth its before / after comparison and the change in plain words. Close it with × or Esc, which also deselects. Editing is limited to the final stage.
+- Nothing is saved automatically. Save (bottom of the left Versions panel, or Ctrl+S) either overwrites the current version or saves a new named one; saved versions are listed in the collapsible left panel: click a card to switch to it (unsaved edits stay with their version, marked "edited", and are back when you reopen it; the Original plan works the same way), or rename / delete it from the card. While anything is unsaved, the panel says so (a dot on its strip when collapsed) and leaving the page asks first. Export / Import JSON and Reset all sit above Save. There is no right-hand sidebar: Summary for the orthodontist is beside Share, and the treatment-stage slider appears under the teeth chart only while the Original plan is open (versions always show the final stage).
+- Toggles: gums / upper / lower as icon buttons left of the camera toolbar; apply adjustments (A), highlight adjusted teeth (H) and the original jaw above as icon buttons right of it (the distance slider appears under them while the original is shown).
 - Adjusted teeth: a card per changed tooth (a rendered picture of the adjusted tooth over a faint blue outline of the planned one, its number, total rotation and movement). Pictures come from one shared offscreen renderer and redraw shortly after the tooth stops changing. Clicking a card opens its comparison with a before/after divider, free rotation, zoom and a larger view, plus the change described in plain terms.
 - Summary for orthodontist: every changed tooth in clinical terms (crown torque, tip, mesial-in/out rotation, translation, intrusion/extrusion) with a plain-words note, copyable as text, downloadable or printable.
-- History timeline at the bottom: every settled change is a step; scrub, undo (Ctrl+Z) and redo (Ctrl+Y / Ctrl+Shift+Z). Each version (and the original plan) has its own timeline, resumed when you switch back to it; a version created by Save as new or by editing the original takes over the steps that led to it. Timelines last for the session; the current adjustments are what gets saved.
+- History of the open version: a vertical slider at the bottom left of the 3D view, styled like the reflections slider, that grows upward with each step (redo on top, undo at the bottom, newest step on top); hovering it names the step: every settled change is a step; scrub, undo (Ctrl+Z) and redo (Ctrl+Y / Ctrl+Shift+Z). Each version (and the original plan) has its own timeline, resumed when you switch back to it; a version created by Save as new or by editing the original takes over the steps that led to it. Timelines last for the session; the current adjustments are what gets saved.
 - The address bar always mirrors the display toggles (`gums`, `upper`, `lower`, `highlight`, `original`; 1 / 0), updated in place without adding Back-button entries, so a reload or bookmark reopens the same view.
 - Share (top right) copies a view-only link: `?mode=view&gums=1&upper=1&lower=1&highlight=0&original=0&adj=…`. The toggles reproduce the sharer's view and `adj` carries the tooth adjustments (saved versions only exist in the sharer's browser). In view-only mode editing, saving, versions, history and import/reset are hidden. The link only works for others once the app is deployed somewhere they can reach.
 - Camera toolbar at the top: Top (upper arch biting surface), Right, Front, Left, Bottom (lower arch biting surface). Top / Bottom hide the opposite arch; the lit button turns off when you orbit.

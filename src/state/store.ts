@@ -43,6 +43,11 @@ export interface JawState {
   archHiddenByView: boolean;
   /** When set, the camera's last request was to face this tooth (FDI) rather than a preset view. */
   cameraFocus: number | null;
+  /**
+   * A tooth picked from the Teeth chart or the adjusted-teeth cards, for the camera to swing round to slowly.
+   * A new object on every request, so picking the same tooth again re-centres it.
+   */
+  followRequest: { fdi: number } | null;
 
   // editing
   adjustments: Adjustments;
@@ -96,6 +101,8 @@ export interface JawState {
   leaveView(): void;
   /** Glide the camera round to face one tooth; brings its arch back if a Top / Bottom view hid it. */
   focusTooth(fdi: number): void;
+  /** Ask the camera to follow a tooth picked from a panel (see `followRequest`). */
+  followTooth(fdi: number): void;
   setAdjustment(fdi: number, adjustment: ToothAdjustment): void;
   resetTooth(fdi: number): void;
   resetAll(): void;
@@ -172,6 +179,14 @@ export const selectFadeUpperJaw = (s: JawState) => {
  * Whether the original jaw is stacked above the main one. Not while the original plan itself is open: the
  * main jaw then *is* the original, with nothing adjusted to compare against.
  */
+/** Light a tooth on the jaw while the pointer is over its button or card elsewhere on the page. */
+export const hoverHandlers = (fdi: number) => ({
+  onPointerEnter: () => useJawStore.getState().hover(fdi),
+  onPointerLeave: () => {
+    if (useJawStore.getState().hovered === fdi) useJawStore.getState().hover(null);
+  },
+});
+
 export const selectStackOriginal = (s: JawState) => s.showOriginal && !s.viewingOriginal;
 
 /** Teeth can only be changed at the final stage, with adjustments shown, and never from a view-only link. */
@@ -250,6 +265,7 @@ export const useJawStore = create<JawState>()((set, get) => ({
   activeView: 'front',
   archHiddenByView: false,
   cameraFocus: null,
+  followRequest: null,
   adjustments: initialAdjustments,
   selected: null,
   hovered: null,
@@ -334,6 +350,8 @@ export const useJawStore = create<JawState>()((set, get) => ({
     }),
 
   // shared links are read-only, whatever tries to change them
+  followTooth: (fdi) => set({ followRequest: { fdi } }),
+
   setAdjustment: (fdi, adjustment) =>
     set((s) => {
       if (s.viewOnly) return {};
@@ -366,10 +384,11 @@ export const useJawStore = create<JawState>()((set, get) => ({
       compareExpanded: false,
     })),
 
-  // ...and opening a comparison drops the selection of any other tooth
+  // ...and opening a tooth from its card selects it, so the panel and the jaw's handles both show it
   openCompare: (compared) =>
-    set((s) => ({ compared, selected: s.selected === compared ? s.selected : null, highlightAdjusted: false })),
-  closeCompare: () => set({ compared: null, compareExpanded: false }),
+    set({ compared, selected: compared, highlightAdjusted: false, followRequest: { fdi: compared } }),
+  // the tooth panel shows the selected tooth, so closing it lets go of the tooth too
+  closeCompare: () => set({ compared: null, compareExpanded: false, selected: null }),
   setCompareExpanded: (compareExpanded) => set({ compareExpanded }),
 
   commitHistory: (forcedLabel) => {
@@ -556,4 +575,11 @@ useJawStore.subscribe((state, prev) => {
     if (s.pendingDraft) return;
     writeDraft(selectUnsaved(s) ? { baseVersionId: s.currentVersionId, adjustments: s.adjustments, at: Date.now() } : null);
   }, DRAFT_WRITE_DELAY_MS);
+});
+
+// Only the original plan has a stage control (StageBar). Versions are edited and shown at the final stage, so
+// leaving the original goes back there, wherever its stage slider was left.
+useJawStore.subscribe((state, prev) => {
+  if (!prev.viewingOriginal || state.viewingOriginal) return;
+  if (state.stage !== lastStage(state) || state.playing) useJawStore.setState({ stage: lastStage(state), playing: false });
 });

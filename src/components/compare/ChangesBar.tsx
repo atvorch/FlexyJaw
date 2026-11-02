@@ -3,7 +3,7 @@ import { toothName } from '../../data/fdi';
 import type { JawModel, ToothModel } from '../../data/model';
 import { isEdited, type ToothAdjustment } from '../../domain/adjustments';
 import { summarizeChange, type ChangeSummary } from '../../domain/analysis';
-import { useJawStore } from '../../state/store';
+import { hoverHandlers, useJawStore } from '../../state/store';
 import { renderToothThumbnail } from './toothThumbnail';
 
 const THUMB_PX = 64;
@@ -61,6 +61,8 @@ export function ChangesBar() {
             title={`${toothName(tooth.fdi)}: open the comparison`}
             // the camera swings round to face it (CameraRig)
             onClick={() => (compared === tooth.fdi ? closeCompare() : openCompare(tooth.fdi))}
+            // lights the tooth on the jaw, as hovering it there does
+            {...hoverHandlers(tooth.fdi)}
           >
             <ToothThumb model={model} tooth={tooth} adjustment={adjustment} />
             <span className="card-fdi">{tooth.fdi}</span>

@@ -77,7 +77,7 @@ export function VersionList() {
   return (
     <>
       {!versions.length ? (
-        <p className="muted versions-empty">Nothing saved yet. Use Save at the bottom of the right panel.</p>
+        <p className="muted versions-empty">Nothing saved yet. Use Save at the bottom of this panel.</p>
       ) : (
         <ul className="versions">
           {[...versions].sort((a, b) => a.savedAt - b.savedAt).map((v) => {

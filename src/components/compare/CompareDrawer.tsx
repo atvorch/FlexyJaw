@@ -7,19 +7,22 @@ import { ChangeTable } from './ChangeTable';
 import { CompareModal } from './CompareModal';
 import { CompareViewer } from './CompareViewer';
 import { PRESETS, createOrbit, resetOrbit, type ComparePreset } from './compareView';
-import { useDismissOnOutsideClick } from './useDismissOnOutsideClick';
+import { ToothEditor } from './ToothEditor';
 
-/** Clicks inside these keep the drawer open. */
-const INSIDE = '.compare-drawer, .changes-bar, .compare-modal';
-
-/** Side drawer comparing one changed tooth with the original plan. */
+/**
+ * Side panel for the selected tooth, however it was picked (on the jaw, in the Teeth chart or from its card):
+ * the editing controls, and once the tooth has been adjusted, its before / after comparison and the change in
+ * plain words.
+ */
 export function CompareDrawer() {
   const model = useJawStore((s) => s.model);
-  const fdi = useJawStore((s) => s.compared);
-  const adjustment = useJawStore((s) => (s.compared != null ? s.adjustments[s.compared] : undefined));
+  const fdi = useJawStore((s) => s.selected ?? s.compared);
+  const adjustment = useJawStore((s) => {
+    const f = s.selected ?? s.compared;
+    return f != null ? s.adjustments[f] : undefined;
+  });
   const expanded = useJawStore((s) => s.compareExpanded);
-  const viewOnly = useJawStore((s) => s.viewOnly);
-  const { closeCompare, setCompareExpanded, editTooth, resetTooth } = useJawStore.getState();
+  const { closeCompare, setCompareExpanded } = useJawStore.getState();
 
   const [preset, setPreset] = useState<ComparePreset>('front');
   // false once the user rotates away; no preset button is lit until one is chosen again
@@ -38,12 +41,14 @@ export function CompareDrawer() {
   };
 
   const tooth = model?.teeth.find((t) => t.fdi === fdi);
-  const open = !!model && !!tooth && isEdited(adjustment);
-  const summary = useMemo(() => (open ? summarizeChange(model!, tooth!, adjustment!) : null), [open, model, tooth, adjustment]);
+  const open = !!model && !!tooth;
+  const adjusted = open && isEdited(adjustment);
+  const summary = useMemo(
+    () => (adjusted ? summarizeChange(model!, tooth!, adjustment!) : null),
+    [adjusted, model, tooth, adjustment],
+  );
 
-  useDismissOnOutsideClick(open && !expanded, INSIDE, closeCompare);
-
-  const viewer = open && (
+  const viewer = adjusted && (
     <div className="compare-viewer">
       <CompareViewer
         model={model!}
@@ -73,36 +78,36 @@ export function CompareDrawer() {
       <aside className={`compare-drawer${open ? ' open' : ''}`} aria-hidden={!open}>
         {/* fixed-width content, so the text doesn't reflow while the column animates its width */}
         <div className="compare-drawer-inner">
-        {open && (
-          <>
-            <header>
-              <div>
-                <h3>Tooth {fdi}</h3>
-                <div className="sub">{toothName(fdi!)}</div>
-              </div>
-              <button className="close" title="Close" onClick={closeCompare}>
-                ×
-              </button>
-            </header>
-            {!expanded && viewer}
-            {summary && <ChangeTable summary={summary} />}
-            <div className="btns" style={{ marginTop: 12 }}>
-              {!viewOnly && (
+          {open && (
+            <>
+              <header>
+                <div>
+                  <h3>Tooth {fdi}</h3>
+                  <div className="sub">{toothName(fdi!)}</div>
+                </div>
+                <button className="close" title="Close and deselect (Esc)" onClick={closeCompare}>
+                  ×
+                </button>
+              </header>
+              <ToothEditor />
+              {adjusted ? (
                 <>
-                  <button onClick={() => editTooth(fdi!)}>Edit this tooth</button>
-                  <button onClick={() => resetTooth(fdi!)}>Reset this tooth</button>
+                  <h4 className="drawer-section">Compared with the original plan</h4>
+                  {!expanded && viewer}
+                  {summary && <ChangeTable summary={summary} />}
+                  <p className="muted">
+                    Measured at the final stage, against the original plan. Directions are worked out from the curve of your
+                    arch, so tiny values are approximate.
+                  </p>
                 </>
+              ) : (
+                <p className="muted">Not adjusted yet: rotate or move it with the handles on the jaw or the sliders above.</p>
               )}
-            </div>
-            <p className="muted">
-              Measured at the final stage, against the original plan. Directions are worked out from the curve of your arch, so
-              tiny values are approximate.
-            </p>
-          </>
-        )}
+            </>
+          )}
         </div>
       </aside>
-      {open && expanded && (
+      {adjusted && expanded && (
         <CompareModal title={`Tooth ${fdi} · ${toothName(fdi!)}`} onClose={() => setCompareExpanded(false)}>
           {viewer}
         </CompareModal>

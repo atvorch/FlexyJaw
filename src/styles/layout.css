@@ -13,17 +13,16 @@
     flex: none !important;
     height: 60vh;
   }
-  .sidebar {
-    width: 100% !important;
-    border-left: 0 !important;
-    border-top: 1px solid var(--line);
-  }
   .versions-panel,
   .versions-panel.collapsed {
     width: 100%;
     max-height: 40vh;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+  .versions-main {
+    flex: 1;
+    width: auto;
   }
   /* stacked: the comparison drawer becomes a full-width block under the 3D view */
   .compare-drawer.open {

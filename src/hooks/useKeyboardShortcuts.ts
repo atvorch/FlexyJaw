@@ -6,7 +6,7 @@ const isTextInput = (el: EventTarget | null) =>
   el instanceof HTMLInputElement ? !['range', 'checkbox', 'button'].includes(el.type) : el instanceof HTMLTextAreaElement;
 
 /**
- * Free-text fields keep the browser's own undo. The sidebar's number boxes don't: their values are
+ * Free-text fields keep the browser's own undo. Number boxes don't: their values are
  * tooth adjustments, so Ctrl+Z there should step the history like everywhere else.
  */
 const keepsNativeUndo = (el: EventTarget | null) =>

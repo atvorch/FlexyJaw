@@ -1,4 +1,3 @@
-import { toothName } from '../../data/fdi';
 import type { Axis } from '../../data/model';
 import { ZERO_ADJUSTMENT, type ToothAdjustment, type Vec3 } from '../../domain/adjustments';
 import { selectCanEdit, useJawStore } from '../../state/store';
@@ -9,7 +8,10 @@ const AXES: Axis[] = ['x', 'y', 'z'];
 
 const withComponent = (v: Vec3, i: number, value: number): Vec3 => v.map((c, j) => (j === i ? value : c)) as Vec3;
 
-/** Gizmo mode, rotate / move sliders and reset for the selected tooth. Locked away from the final stage. */
+/**
+ * Gizmo mode, rotate / move sliders and reset for the selected tooth, in the tooth panel. Locked away from the
+ * final stage.
+ */
 export function ToothEditor() {
   const model = useJawStore((s) => s.model);
   const selected = useJawStore((s) => s.selected);
@@ -22,16 +24,12 @@ export function ToothEditor() {
   const s = useJawStore.getState();
 
   const tooth = model?.teeth.find((t) => t.fdi === selected);
-  if (!tooth) return <p className="muted">None selected.</p>;
+  if (!tooth) return null;
 
   const update = (patch: Partial<ToothAdjustment>) => s.setAdjustment(tooth.fdi, { ...adjustment, ...patch });
 
   return (
-    <div>
-      <div className="editor-title">
-        Tooth {tooth.fdi} · {toothName(tooth.fdi)}
-      </div>
-
+    <div className="tooth-editor">
       {viewOnly ? (
         <p className="muted">This is a view-only link, so teeth can't be changed here.</p>
       ) : !canEdit ? (

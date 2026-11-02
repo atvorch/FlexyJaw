@@ -2,7 +2,10 @@ import { useEffect, useState, type RefObject } from 'react';
 import { toothName } from '../../data/fdi';
 import { useJawStore } from '../../state/store';
 
-/** Name of the hovered tooth, following the pointer. */
+/**
+ * Name of the hovered tooth, following the pointer over the 3D view. A tooth lit from a chart button or card
+ * already has its name there, so the tooltip stays away while the pointer is over the panels.
+ */
 export function ToothTooltip({ container }: { container: RefObject<HTMLElement> }) {
   const hovered = useJawStore((s) => s.hovered);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -11,7 +14,7 @@ export function ToothTooltip({ container }: { container: RefObject<HTMLElement> 
     const el = container.current;
     if (!el) return;
     const onMove = (e: PointerEvent) => {
-      if (e.buttons) return setPos(null);
+      if (e.buttons || !(e.target instanceof HTMLCanvasElement)) return setPos(null);
       const r = el.getBoundingClientRect();
       setPos({ x: e.clientX - r.left + 14, y: e.clientY - r.top + 10 });
     };

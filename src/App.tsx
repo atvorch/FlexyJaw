@@ -3,7 +3,6 @@ import { CompareDrawer } from './components/compare/CompareDrawer';
 import { ReportModal } from './components/report/ReportModal';
 import { RestoreDraftDialog } from './components/saves/RestoreDraftDialog';
 import { SaveDialog } from './components/saves/SaveDialog';
-import { Sidebar } from './components/sidebar/Sidebar';
 import { VersionsPanel } from './components/versions/VersionsPanel';
 import { Viewport } from './components/viewport/Viewport';
 import { loadJawModel } from './data/loadJaw';
@@ -34,7 +33,6 @@ export function App() {
       <Viewport error={error} />
       {/* a column of its own: opening it narrows the 3D view instead of covering it */}
       <CompareDrawer />
-      <Sidebar />
       <ReportModal />
       {!viewOnly && <SaveDialog />}
       {!viewOnly && <RestoreDraftDialog />}

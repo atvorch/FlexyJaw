@@ -3,12 +3,11 @@ import { downloadAdjustments, readAdjustmentsFile } from '../../state/persistenc
 import { useJawStore } from '../../state/store';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
-export function AdjustmentsPanel() {
+/** Export / import the open adjustments as JSON, or reset them all. At the bottom of the Versions panel. */
+export function VersionActions() {
   const fileInput = useRef<HTMLInputElement>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const changedCount = useJawStore((st) => Object.keys(st.adjustments).length);
-  // shared links can be looked at, not changed
-  const readOnly = useJawStore((st) => st.viewOnly);
   const s = useJawStore.getState();
 
   const onImport = async (file: File | undefined) => {
@@ -21,19 +20,16 @@ export function AdjustmentsPanel() {
   };
 
   return (
-    <div className="btns">
-      <button className="on wide" onClick={() => s.setReportOpen(true)}>
-        Summary for orthodontist
+    <div className="version-actions">
+      <button title="Download the adjustments as a JSON file" onClick={() => downloadAdjustments(useJawStore.getState().adjustments)}>
+        Export
       </button>
-      <button onClick={() => downloadAdjustments(useJawStore.getState().adjustments)}>Export JSON</button>
-      {!readOnly && (
-        <>
-          <button onClick={() => fileInput.current?.click()}>Import JSON</button>
-          <button disabled={!changedCount} onClick={() => setConfirmReset(true)}>
-            Reset all
-          </button>
-        </>
-      )}
+      <button title="Load adjustments from a JSON file" onClick={() => fileInput.current?.click()}>
+        Import
+      </button>
+      <button className="danger" title="Remove the changes to every tooth" disabled={!changedCount} onClick={() => setConfirmReset(true)}>
+        Reset all
+      </button>
       {confirmReset && (
         <ConfirmDialog
           title="Reset all teeth?"

@@ -30,7 +30,7 @@ export function ShineSlider() {
   }, []);
 
   return (
-    <div ref={panel} className="shine-slider" title="Tooth reflections: lower it to reduce the glare on the teeth (scroll to adjust)">
+    <div ref={panel} className="float-slider shine-slider" title="Tooth reflections: lower it to reduce the glare on the teeth (scroll to adjust)">
       {/* a glint: the reflection being controlled */}
       <svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M10 2.5c.6 3.6 1.9 4.9 5.5 5.5-3.6.6-4.9 1.9-5.5 5.5-.6-3.6-1.9-4.9-5.5-5.5 3.6-.6 4.9-1.9 5.5-5.5z" />

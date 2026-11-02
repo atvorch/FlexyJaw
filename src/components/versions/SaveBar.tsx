@@ -1,6 +1,6 @@
 import { selectUnsaved, useJawStore } from '../../state/store';
 
-/** Pinned to the bottom of the sidebar: save status and the Save button. */
+/** Pinned to the bottom of the Versions panel: save status and the Save button. */
 export function SaveBar() {
   const unsaved = useJawStore(selectUnsaved);
   const current = useJawStore((s) => s.versions.find((v) => v.id === s.currentVersionId));
