@@ -368,7 +368,8 @@ export const useJawStore = create<JawState>()((set, get) => ({
   // and "highlight adjusted" switches off so the chosen tooth is the only highlighted one
   select: (selected) =>
     set((s) => {
-      if (selected == null) return { selected };
+      // letting go (empty space, Esc) closes the tooth panel too, however the tooth was opened
+      if (selected == null) return { selected, compared: null, compareExpanded: false };
       const closeCompare = s.compared != null && s.compared !== selected;
       return { selected, highlightAdjusted: false, ...(closeCompare ? { compared: null, compareExpanded: false } : {}) };
     }),
