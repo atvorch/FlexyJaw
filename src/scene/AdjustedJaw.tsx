@@ -3,7 +3,7 @@ import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import type { JawModel } from '../data/model';
 import { selectFadeUpperJaw, useJawStore } from '../state/store';
 import { GumDeformer } from './GumDeformer';
-import { FADED_OPACITY, createGumMaterial, gumMaterial, stepFade } from './materials';
+import { FADED_OPACITY, createGumMaterial, createRealGumMaterial, gumMaterial, realGumMaterial, stepFade } from './materials';
 import { raycastWhenVisible, scene } from './registry';
 import { Tooth } from './Tooth';
 
@@ -27,8 +27,9 @@ const gumClick = (e: ThreeEvent<MouseEvent>) => {
 /** The editable jaw: every tooth with its user adjustment, plus the gums. */
 export function AdjustedJaw({ model }: { model: JawModel }) {
   const visibility = useJawStore((s) => s.visibility);
+  const realistic = useJawStore((s) => s.realistic);
   // its own material, so it can fade (with the upper teeth) without touching the lower or original gums
-  const upperGumMaterial = useMemo(createGumMaterial, []);
+  const upperGumMaterial = useMemo(() => (realistic ? createRealGumMaterial() : createGumMaterial()), [realistic]);
   useEffect(() => () => upperGumMaterial.dispose(), [upperGumMaterial]);
   useFrame((_, dt) => stepFade(upperGumMaterial, selectFadeUpperJaw(useJawStore.getState()) ? FADED_OPACITY : 1, dt));
 
@@ -43,7 +44,7 @@ export function AdjustedJaw({ model }: { model: JawModel }) {
         <mesh
           key={i}
           geometry={g.geometry}
-          material={g.upper ? upperGumMaterial : gumMaterial}
+          material={g.upper ? upperGumMaterial : realistic ? realGumMaterial : gumMaterial}
           visible={visibility.gums && (g.upper ? visibility.upper : visibility.lower)}
           raycast={raycastWhenVisible}
           onClick={gumClick}

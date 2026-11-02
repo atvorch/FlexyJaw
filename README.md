@@ -66,4 +66,6 @@ Per-frame work (stage playback, tooth transforms, gum deformation) reads the sto
 - Share (top right) copies a view-only link: `?mode=view&gums=1&upper=1&lower=1&highlight=0&original=0&adj=…`. The toggles reproduce the sharer's view and `adj` carries the tooth adjustments (saved versions only exist in the sharer's browser). In view-only mode editing, saving, versions, history and import/reset are hidden. The link only works for others once the app is deployed somewhere they can reach.
 - Camera toolbar at the top: Top (upper arch biting surface), Right, Front, Left, Bottom (lower arch biting surface). Top / Bottom hide the opposite arch; the lit button turns off when you orbit.
 - Mouse: drag to orbit, drag with the wheel (or right button) pressed to pan, scroll to zoom.
+- Plain | Realistic switch (top right): the realistic look adds screen-space ambient occlusion, a stippled glossy gum material and studio reflections.
+- Reflections slider (right edge): how much the teeth reflect light, 0% matte to 150%; the mouse wheel over it steps 5%. Both settings are kept in the address (`realistic`, `shine`) and in share links.
 - Front view (F), gizmo mode rotate (R) / move (G), Esc closes the innermost panel.

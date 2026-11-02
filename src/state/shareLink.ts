@@ -1,7 +1,7 @@
 import { isEdited, type Adjustments, type ToothAdjustment, type Vec3 } from '../domain/adjustments';
 
 /**
- * Share links: `?mode=view&gums=1&upper=1&lower=1&highlight=0&original=0&adj=…`
+ * Share links: `?mode=view&gums=1&upper=1&lower=1&highlight=0&original=0&realistic=0&shine=100&adj=…`
  *
  * `adj` carries the tooth adjustments themselves, because saved versions live only in the sharer's browser;
  * without it a recipient would see the plain plan. It is compact JSON rows
@@ -13,6 +13,9 @@ export interface ShareSettings {
   lower: boolean;
   highlightAdjusted: boolean;
   showOriginal: boolean;
+  realistic: boolean;
+  /** Tooth reflection level; written as a whole percentage (`shine=60`). */
+  toothShine: number;
 }
 
 export interface ShareLink extends Partial<ShareSettings> {
@@ -60,6 +63,8 @@ function setToggleParams(p: URLSearchParams, settings: ShareSettings) {
   p.set('lower', flag(settings.lower));
   p.set('highlight', flag(settings.highlightAdjusted));
   p.set('original', flag(settings.showOriginal));
+  p.set('realistic', flag(settings.realistic));
+  p.set('shine', String(Math.round(settings.toothShine * 100)));
 }
 
 /**
@@ -68,6 +73,7 @@ function setToggleParams(p: URLSearchParams, settings: ShareSettings) {
  */
 export function writeToggleParams(settings: ShareSettings) {
   const url = new URL(location.href);
+  url.searchParams.delete('bright'); // replaced by `shine`
   setToggleParams(url.searchParams, settings);
   if (url.href !== location.href) history.replaceState(history.state, '', url);
 }
@@ -97,6 +103,8 @@ export function readShareLink(search = location.search): ShareLink {
     lower: bool('lower'),
     highlightAdjusted: bool('highlight'),
     showOriginal: bool('original'),
+    realistic: bool('realistic'),
+    toothShine: p.has('shine') && isFinite(Number(p.get('shine'))) ? Number(p.get('shine')) / 100 : undefined,
     adjustments: adj ? decodeAdjustments(adj) : null,
   };
 }

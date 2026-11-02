@@ -8,6 +8,8 @@ const togglesOf = (s: JawState): ShareSettings => ({
   lower: s.visibility.lower,
   highlightAdjusted: s.highlightAdjusted,
   showOriginal: s.showOriginal,
+  realistic: s.realistic,
+  toothShine: s.toothShine,
 });
 
 const sameToggles = (a: ShareSettings, b: ShareSettings) =>
@@ -15,7 +17,9 @@ const sameToggles = (a: ShareSettings, b: ShareSettings) =>
   a.upper === b.upper &&
   a.lower === b.lower &&
   a.highlightAdjusted === b.highlightAdjusted &&
-  a.showOriginal === b.showOriginal;
+  a.showOriginal === b.showOriginal &&
+  a.realistic === b.realistic &&
+  a.toothShine === b.toothShine;
 
 /** Keep the address bar's toggle parameters in step with the display toggles, from load onwards. */
 export function useToggleQueryParams() {

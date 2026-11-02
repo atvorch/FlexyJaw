@@ -25,6 +25,8 @@ export function ShareButton() {
         lower: s.visibility.lower,
         highlightAdjusted: s.highlightAdjusted,
         showOriginal: s.showOriginal,
+        realistic: s.realistic,
+        toothShine: s.toothShine,
       },
       s.adjustments,
     );

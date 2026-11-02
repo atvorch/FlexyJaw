@@ -29,6 +29,10 @@ export interface JawState {
   applyAdjustments: boolean;
   highlightAdjusted: boolean;
   showOriginal: boolean;
+  /** Realistic look: shading in gaps and creases, textured glossy gums, soft shadow. Off = the plain look. */
+  realistic: boolean;
+  /** How much the teeth reflect light (gloss, highlights), 1 = as designed, 0 = matte. Never changes their colour. */
+  toothShine: number;
   originalGapMm: number;
   /** Preset the camera should glide to; `viewRequest` is bumped on every request, even for the same view. */
   cameraView: JawView;
@@ -84,6 +88,8 @@ export interface JawState {
   setApplyAdjustments(on: boolean): void;
   setHighlightAdjusted(on: boolean): void;
   setShowOriginal(on: boolean): void;
+  setRealistic(on: boolean): void;
+  setToothShine(value: number): void;
   setOriginalGap(mm: number): void;
   requestView(view: JawView): void;
   /** The user orbited or zoomed, so no preset is active any more. */
@@ -179,6 +185,12 @@ const comparedAfter = (s: JawState, adjustments: Adjustments) => {
   return { compared, compareExpanded: compared == null ? false : s.compareExpanded };
 };
 
+export const TOOTH_SHINE_MIN = 0;
+export const TOOTH_SHINE_MAX = 1.5;
+function clampShine(value: number) {
+  return Math.min(TOOTH_SHINE_MAX, Math.max(TOOTH_SHINE_MIN, isFinite(value) ? value : 1));
+}
+
 // history timeline keys for what isn't a saved version
 const ORIGINAL_KEY = '#original';
 const UNSAVED_KEY = '#unsaved';
@@ -230,6 +242,8 @@ export const useJawStore = create<JawState>()((set, get) => ({
   applyAdjustments: true,
   highlightAdjusted: link.highlightAdjusted ?? false,
   showOriginal: link.showOriginal ?? false,
+  realistic: link.realistic ?? false,
+  toothShine: clampShine(link.toothShine ?? 1),
   originalGapMm: 8,
   cameraView: 'front',
   viewRequest: 0,
@@ -279,6 +293,8 @@ export const useJawStore = create<JawState>()((set, get) => ({
   setHighlightAdjusted: (highlightAdjusted) => set({ highlightAdjusted }),
   // the camera reframes itself whenever the stacking changes (see CameraRig)
   setShowOriginal: (showOriginal) => set({ showOriginal }),
+  setRealistic: (realistic) => set({ realistic }),
+  setToothShine: (value) => set({ toothShine: clampShine(value) }),
   setOriginalGap: (originalGapMm) => set({ originalGapMm }),
   requestView: (view) =>
     set((s) => {

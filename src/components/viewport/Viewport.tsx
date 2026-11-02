@@ -4,6 +4,8 @@ import { JawScene } from '../../scene/JawScene';
 import { scene } from '../../scene/registry';
 import { useJawStore } from '../../state/store';
 import { ChangesBar } from '../compare/ChangesBar';
+import { ShineSlider } from './ShineSlider';
+import { LookSwitch } from './LookSwitch';
 import { ShareButton } from './ShareButton';
 import { ViewToolbar } from './ViewToolbar';
 import { HistoryBar } from './HistoryBar';
@@ -51,7 +53,11 @@ export function Viewport({ error }: { error: string | null }) {
       )}
       <ViewToolbar />
       <ShortcutHint />
-      <ShareButton />
+      {model && <ShineSlider />}
+      <div className="viewport-actions">
+        <LookSwitch />
+        <ShareButton />
+      </div>
       <ToothTooltip container={container} />
       {model && (
         <div className="bottom-dock">

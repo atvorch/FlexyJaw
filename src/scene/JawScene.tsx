@@ -6,6 +6,7 @@ import { CameraRig } from './CameraRig';
 import { JawLabels } from './JawLabels';
 import { Lighting } from './Lighting';
 import { OriginalJaw } from './OriginalJaw';
+import { RealisticEffects } from './RealisticEffects';
 import { StagePlayer } from './StagePlayer';
 import { ToothGizmo } from './ToothGizmo';
 
@@ -24,6 +25,7 @@ export function JawScene({ model }: { model: JawModel }) {
       <OriginalJaw model={model} />
       <ToothGizmo />
       <JawLabels model={model} />
+      <RealisticEffects />
     </>
   );
 }

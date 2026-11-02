@@ -5,7 +5,7 @@ import type { ToothModel } from '../data/model';
 import { applyToPivot, isEdited } from '../domain/adjustments';
 import { adjustmentWeight, interpolateStageMatrix } from '../domain/stage';
 import { selectFadeUpperJaw, useJawStore } from '../state/store';
-import { COLORS, FADED_OPACITY, createToothMaterial, stepFade } from './materials';
+import { COLORS, FADED_OPACITY, REAL, createRealToothMaterial, createToothMaterial, setToothShine, stepFade } from './materials';
 import { raycastWhenVisible, scene } from './registry';
 
 /** A movement past this many pixels between press and release is an orbit drag, not a click. */
@@ -18,7 +18,9 @@ const CLICK_SLOP_PX = 4;
 export function Tooth({ tooth }: { tooth: ToothModel }) {
   const stageGroup = useRef<Group>(null!);
   const pivot = useRef<Group>(null!);
-  const material = useMemo(createToothMaterial, []);
+  const realistic = useJawStore((s) => s.realistic);
+  const shine = useJawStore((s) => s.toothShine);
+  const material = useMemo(() => (realistic ? createRealToothMaterial() : createToothMaterial()), [realistic]);
   const meshOffset = useMemo(() => tooth.center.clone().negate(), [tooth]);
 
   const lit = useJawStore(
@@ -30,9 +32,10 @@ export function Tooth({ tooth }: { tooth: ToothModel }) {
   const hovered = useJawStore((s) => s.hovered === tooth.fdi);
 
   useEffect(() => {
-    material.color.copy(lit ? COLORS.toothLit : COLORS.tooth);
+    material.color.copy(lit ? COLORS.toothLit : realistic ? REAL.tooth : COLORS.tooth);
     material.emissive.copy(lit ? COLORS.emissiveLit : hovered ? COLORS.emissiveHover : COLORS.none);
-  }, [material, lit, hovered]);
+    setToothShine(material, shine);
+  }, [material, realistic, shine, lit, hovered]);
   useEffect(() => () => material.dispose(), [material]);
 
   useEffect(() => {
