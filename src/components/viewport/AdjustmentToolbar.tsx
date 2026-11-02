@@ -51,7 +51,7 @@ export function AdjustmentToolbar() {
   ] as const;
 
   return (
-    <div className="adjustment-toolbar-wrap">
+    <>
       <div className="visibility-toolbar" role="toolbar" aria-label="Adjustment display">
         {buttons.map((b) => (
           <button key={b.id} className={b.on ? 'on' : undefined} aria-pressed={b.on} title={b.title} onClick={b.toggle}>
@@ -69,6 +69,6 @@ export function AdjustmentToolbar() {
           <span className="gap-value">{gap} mm</span>
         </label>
       )}
-    </div>
+    </>
   );
 }

@@ -36,6 +36,24 @@ const DIVIDER_GRAB_PX = 14;
 const ORBIT_SPEED = 0.012;
 const ZOOM_MIN = 0.3, ZOOM_MAX = 3;
 
+/*
+ * One renderer for every comparison, kept for the life of the page. Browsers allow only a handful of WebGL
+ * contexts at once and free disposed ones lazily, so a new renderer per opened tooth soon made the browser drop
+ * the oldest context: the main 3D view.
+ */
+let sharedRenderer: WebGLRenderer | null = null;
+function compareRenderer() {
+  if (!sharedRenderer || sharedRenderer.getContext().isContextLost()) {
+    const renderer = new WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.outputColorSpace = LinearSRGBColorSpace;
+    renderer.setScissorTest(true);
+    renderer.setClearColor(COLORS.background, 1);
+    sharedRenderer = renderer;
+  }
+  return sharedRenderer;
+}
+
 const smoothstep = (x: number) => {
   x = Math.min(1, Math.max(0, x));
   return x * x * (3 - 2 * x);
@@ -45,17 +63,15 @@ const smoothstep = (x: number) => {
 export function CompareViewer(props: Props) {
   const { model, tooth, split, onSplit, orbit, onOrbitStart, onResetView, expanded, onToggleExpand } = props;
   const wrap = useRef<HTMLDivElement>(null);
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const canvasHost = useRef<HTMLDivElement>(null);
   const live = useRef(props);
   live.current = props;
 
-  // three.js renderer and the two scenes; rebuilt per tooth, rendered every animation frame
+  // the two scenes, rebuilt per tooth and rendered every animation frame with the shared renderer
   useEffect(() => {
-    const renderer = new WebGLRenderer({ canvas: canvas.current!, antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-    renderer.outputColorSpace = LinearSRGBColorSpace;
-    renderer.setScissorTest(true);
-    renderer.setClearColor(COLORS.background, 1);
+    const renderer = compareRenderer();
+    const canvas = renderer.domElement;
+    canvasHost.current!.appendChild(canvas);
 
     const camera = new PerspectiveCamera(30, 1, 0.5, 500);
     const lights: DirectionalLight[] = [];
@@ -92,7 +108,7 @@ export function CompareViewer(props: Props) {
       const { preset, split, orbit } = live.current;
       const size = wrap.current?.clientWidth ?? 0;
       if (!size) return;
-      if (canvas.current!.width !== Math.round(size * renderer.getPixelRatio())) renderer.setSize(size, size, false);
+      if (canvas.width !== Math.round(size * renderer.getPixelRatio())) renderer.setSize(size, size, false);
 
       // adjustments can change while the drawer is open
       const adjustments = useJawStore.getState().adjustments;
@@ -127,7 +143,8 @@ export function CompareViewer(props: Props) {
       cancelAnimationFrame(raf);
       toothMat.dispose();
       neighbourMat.dispose();
-      renderer.dispose();
+      // the renderer stays for the next comparison; only its canvas leaves this picture
+      canvas.remove();
     };
   }, [model, tooth]);
 
@@ -205,7 +222,7 @@ export function CompareViewer(props: Props) {
         onResetView();
       }}
     >
-      <canvas ref={canvas} />
+      <div ref={canvasHost} className="compare-canvas" />
       <div className="compare-divider" style={{ left: `${split * 100}%` }} />
       <span className="compare-tag left" style={tagStyle(split, split - 0.5)}>Original</span>
       <span className="compare-tag right" style={tagStyle(1 - split, 0.5 - split)}>Adjusted</span>
